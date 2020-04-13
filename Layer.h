@@ -13,6 +13,8 @@ class Layer {
     public:
         Layer(int num_neurons);
         ~Layer();
+
+        std::string getName();
         
     private:
         double* weights;

@@ -18,3 +18,7 @@ Layer::~Layer() {
     free(this->gradients);
     free(this->results);
 }
+
+std::string Layer::getName() {
+    return this->name;
+}
