@@ -9,10 +9,10 @@
 #include <string.h>
 #include <string>
 
-#ifndef LAYER_H
-#define LAYER_H
-#endif
-// #include "Layer.h"
+#include "Layer.h"
+
+#ifndef NET_H
+#define NET_H
 
 struct LayerNode {
     Layer* curr;
@@ -34,3 +34,5 @@ class Net {
     private:
         double lr;
 };
+
+#endif

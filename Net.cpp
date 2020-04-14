@@ -27,6 +27,15 @@ void Net::addLayer(int num_neurons) {
         temp->prev = NULL;
 
         this->head = temp;
+        this->tail = temp;
+    } else {
+        LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
+        temp->curr = new Layer(5);
+        temp->next = NULL;
+        temp->prev = this->tail; // set new node's prev to the tail
+
+        this->tail->next = temp; // set old tail's next to temp
+        this->tail = temp;       // make temp the new tail
     }
 }
 

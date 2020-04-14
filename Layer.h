@@ -9,6 +9,9 @@
 #include <string.h>
 #include <string>
 
+#ifndef LAYER_H
+#define LAYER_H
+
 class Layer {
     public:
         Layer(int num_neurons);
@@ -24,3 +27,4 @@ class Layer {
         std::string name; 
 };
 
+#endif
