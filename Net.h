@@ -22,10 +22,14 @@ struct LayerNode {
 
 class Net {
     public:
-        Net(double lr);
-        // ~Net();
+        Net(double lr, int input_size);
+        ~Net();
         
-        void addLayer(int num_neurons);
+        // actually useful functions
+        void addLayer(int num_input, int num_neurons, std::string name);
+        void performForwardProp();
+
+        // Debug Functions
         void printNet();
         
         LayerNode* head;
@@ -33,6 +37,9 @@ class Net {
 
     private:
         double lr;
+        int input_size;
+        double* input;
+        double* prediction;
 };
 
 #endif

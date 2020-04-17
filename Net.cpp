@@ -10,27 +10,33 @@
 #include <string.h>
 #include <string>
 
-//#include "Layer.h"
 #include "Net.h"
 
-Net::Net(double lr) {
+Net::Net(double lr, int input_size) {
     this->lr = lr;
+    this->input_size = input_size;
+    this->input = new double[input_size];
     this->head = NULL;
     this->tail = NULL;
 }
 
-void Net::addLayer(int num_neurons) {
+Net::~Net() {
+    delete [] input;
+}
+
+void Net::addLayer(int num_neurons, int num_input, std::string name) {
     if (head == NULL) {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
-        temp->curr = new Layer(5);
+        temp->curr = new Layer(num_input, num_neurons,1, name);
         temp->next = NULL;
         temp->prev = NULL;
 
         this->head = temp;
         this->tail = temp;
+        // temp->curr->printLayerWeights();
     } else {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
-        temp->curr = new Layer(5);
+        temp->curr = new Layer(num_input, num_neurons, 0, name);
         temp->next = NULL;
         temp->prev = this->tail; // set new node's prev to the tail
 
