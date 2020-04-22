@@ -26,7 +26,7 @@ Net::~Net() {
 
 /***************** ACTUALLY USEFUL FUNCTIONS ***********************/
 
-void Net::addLayer(int num_neurons, int num_input, std::string name) {
+void Net::addLayer(int num_input, int num_neurons, std::string name) {
     if (head == NULL) {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
         temp->curr = new Layer(num_input, num_neurons,1, name);
@@ -47,6 +47,26 @@ void Net::addLayer(int num_neurons, int num_input, std::string name) {
     }
 }
 
+void Net::performForwardProp() {
+    double* A_prev = this->input;
+
+    LayerNode* temp = this->head;
+
+    while (temp != NULL) {
+        // forward prop for given layer
+        temp->curr->forwardProp(A_prev);
+        A_prev = temp->curr->getActivations();
+        temp = temp->next;
+    }
+}
+
+void Net::setInput(double* inp) {
+    // make this faster with memcpy
+    for (int i = 0; i < this->input_size; i++) {
+        this->input[i] = inp[i];
+    }
+}
+
 /***************** HELPER FUNCTIONS ********************************/
 
 
@@ -56,7 +76,34 @@ void Net::addLayer(int num_neurons, int num_input, std::string name) {
 void Net::printNet() {
     LayerNode* temp = this->head;
     while (temp != NULL) {
-        std::cout << temp->curr->getName() << "\n";
+        std::cout << temp->curr->getName() << ":\n";
+        std::cout << "input size: " << temp->curr->getNumInput() << "\n";
+        std::cout << "num neurons: " << temp->curr->getNumNeurons() << "\n";
+        std::cout << "---------------------------\n";
+        temp = temp->next;
+    }
+}
+
+void Net::printNetActivations() {
+    LayerNode* temp = this->head;
+    while (temp != NULL) {
+        std::cout << temp->curr->getName() << ":\n";
+        // std::cout << "input size: " << temp->curr->getNumInput() << "\n";
+        // std::cout << "num neurons: " << temp->curr->getNumNeurons() << "\n";
+        temp->curr->printA();
+        std::cout << "---------------------------\n";
+        temp = temp->next;
+    }
+}
+
+void Net::printNetWeights() {
+    LayerNode* temp = this->head;
+    while (temp != NULL) {
+        std::cout << temp->curr->getName() << ":\n";
+        // std::cout << "input size: " << temp->curr->getNumInput() << "\n";
+        // std::cout << "num neurons: " << temp->curr->getNumNeurons() << "\n";
+        temp->curr->printLayerWeights();
+        std::cout << "---------------------------\n";
         temp = temp->next;
     }
 }

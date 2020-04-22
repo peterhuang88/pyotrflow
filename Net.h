@@ -28,11 +28,15 @@ class Net {
         // actually useful functions
         void addLayer(int num_input, int num_neurons, std::string name);
         void performForwardProp();
+        void setInput(double* inp);
 
         // helper functions
 
         // Debug Functions
         void printNet();
+        void printNetActivations();
+        void printNetWeights();
+
         
         LayerNode* head;
         LayerNode* tail;

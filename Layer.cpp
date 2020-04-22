@@ -1,8 +1,10 @@
+#include <iostream>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <iostream>
+
 
 #include "Layer.h"
 
@@ -22,6 +24,8 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
         this->W[i] = new double[num_input];
     }
     this->Z = new double[num_neurons];
+    this->A = new double[num_neurons];
+    this->b = 0.0;
 
     // TODO: THIS NEEDS TO CHANGE
     // this->gradients = new double[num_neurons];
@@ -39,22 +43,41 @@ Layer::~Layer() {
 /***************** ACTUALLY USEFUL FUNCTIONS ***********************/
 
 void Layer::forwardProp(double* input) {
+    // perform wTx 
     for (int i = 0; i < this->num_neurons; i++) {
         double sum = 0;
         for (int j = 0; j < this->num_input; j++) {
             sum += this->W[i][j] * input[j];
         }
-        this->Z[i] = sum;
+        this->Z[i] = sum + this->b;
     }
 
-}
+    // calculate activations
+    for (int i = 0; i < this->num_neurons; i++) {
+        // this->A[i] = 1.0 / (1.0 + exp(-this->Z[i]));
 
+        // TODO: comment out, this is only for testing
+        this->A[i] = this->Z[i];
+    }
+}
 
 
 /***************** HELPER FUNCTIONS ********************************/
 
+double* Layer::getActivations() {
+    return this->A;
+}
+
 std::string Layer::getName() {
     return this->name;
+}
+
+int Layer::getNumInput() {
+    return this->num_input;
+}
+
+int Layer::getNumNeurons() {
+    return this->num_neurons;
 }
 
 /***************** DEBUG FUNCTIONS *********************************/
@@ -70,6 +93,14 @@ void Layer::initializeTestWeights() {
     }
 }
 
+void Layer::printA() {
+    std::cout << "Printing layer " << this->name << " activations\n";
+    for (int i = 0; i < this->num_neurons; i++) {
+        printf("%lf ", this->A[i]);
+    }
+    printf("\n");
+}
+
 void Layer::printLayerWeights() {
     std::cout << "Printing layer " << this->name << " weights\n";
     for (int i = 0; i < this->num_neurons; i++) {
@@ -80,8 +111,8 @@ void Layer::printLayerWeights() {
     }
 }
 
-void Layer::printResults() {
-    std::cout << "Printing layer " << this->name << " results\n";
+void Layer::printZ() {
+    std::cout << "Printing layer " << this->name << " Z's\n";
     for (int i = 0; i < this->num_neurons; i++) {
         printf("%lf ", this->Z[i]);
     }

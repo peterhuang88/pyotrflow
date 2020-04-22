@@ -21,12 +21,16 @@ class Layer {
         void forwardProp(double* input);
 
         // random helper functions
+        double* getActivations();
         std::string getName();
+        int getNumInput();
+        int getNumNeurons();
 
         // debug functions
         void initializeTestWeights();
+        void printA();
         void printLayerWeights();
-        void printResults();
+        void printZ();
         
     private:
         int num_neurons;
@@ -35,7 +39,9 @@ class Layer {
         int marker; // 0 = nothing special, 1 = head
 
         double** W; // this is actually W_t
-        double* Z;
+        double b; // bias
+        double* Z; // wTx + b
+        double* A; // A = activation_func(Z)
         // double* gradients;
 };
 
