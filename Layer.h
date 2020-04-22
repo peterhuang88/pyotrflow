@@ -34,8 +34,8 @@ class Layer {
         std::string name; 
         int marker; // 0 = nothing special, 1 = head
 
-        double** weights;
-        double* results;
+        double** W; // this is actually W_t
+        double* Z;
         // double* gradients;
 };
 

@@ -29,6 +29,8 @@ class Net {
         void addLayer(int num_input, int num_neurons, std::string name);
         void performForwardProp();
 
+        // helper functions
+
         // Debug Functions
         void printNet();
         

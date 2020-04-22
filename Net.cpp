@@ -24,6 +24,8 @@ Net::~Net() {
     delete [] input;
 }
 
+/***************** ACTUALLY USEFUL FUNCTIONS ***********************/
+
 void Net::addLayer(int num_neurons, int num_input, std::string name) {
     if (head == NULL) {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
@@ -44,6 +46,12 @@ void Net::addLayer(int num_neurons, int num_input, std::string name) {
         this->tail = temp;       // make temp the new tail
     }
 }
+
+/***************** HELPER FUNCTIONS ********************************/
+
+
+
+/***************** DEBUG FUNCTIONS *********************************/
 
 void Net::printNet() {
     LayerNode* temp = this->head;
