@@ -9,6 +9,8 @@
 #include <string.h>
 #include <string>
 
+#include "MatrixCalculator.h"
+
 #ifndef LAYER_H
 #define LAYER_H
 
@@ -18,6 +20,7 @@ class Layer {
         ~Layer();
 
         // actually useful functions
+        void backProp();
         void forwardProp(double* input);
 
         // random helper functions
@@ -37,6 +40,7 @@ class Layer {
         int num_input;
         std::string name; 
         int marker; // 0 = nothing special, 1 = head
+        MatrixCalculator mc;
 
         double** W; // this is actually W_t
         double b; // bias

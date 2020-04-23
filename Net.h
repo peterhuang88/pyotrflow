@@ -27,6 +27,7 @@ class Net {
         
         // actually useful functions
         void addLayer(int num_input, int num_neurons, std::string name);
+        void performBackProp();
         void performForwardProp();
         void setInput(double* inp);
 
@@ -45,7 +46,9 @@ class Net {
         double lr;
         int input_size;
         double* input;
+        double label;
         double* prediction;
+        
 };
 
 #endif

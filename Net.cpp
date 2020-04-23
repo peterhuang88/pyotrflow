@@ -18,6 +18,7 @@ Net::Net(double lr, int input_size) {
     this->input = new double[input_size];
     this->head = NULL;
     this->tail = NULL;
+    this->label = 0;
 }
 
 Net::~Net() {
@@ -45,6 +46,13 @@ void Net::addLayer(int num_input, int num_neurons, std::string name) {
         this->tail->next = temp; // set old tail's next to temp
         this->tail = temp;       // make temp the new tail
     }
+}
+
+void Net::performBackProp() {
+    // do final layer first
+    LayerNode* temp = this->tail;
+    double* final_layer_act = temp->curr->getActivations();
+    double dZ = final_layer_act[0] - this->label;
 }
 
 void Net::performForwardProp() {

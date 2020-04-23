@@ -14,6 +14,8 @@ int main(int argc, char** argv) {
     //my_net.addLayer(3,3,"layer1");
     //my_net.addLayer(3,4,"layer2");
     //my_net.printNet();
+
+    /*
     DatasetParser parser("./data/sonar.all-data", 0);
 
     // Use the below function to get size of input variables (60 for sonar data) or number of observations (208 for sonar data)
@@ -26,7 +28,7 @@ int main(int argc, char** argv) {
     std::cout << "First observation output: " << parser.getOutput(0) << std::endl; 
 
     // There are also functions that return the entirety of the output/input data (as vectors) or the input/output for a given index as a pair. See DatasetParser.cpp for methods.
-
+    */ 
     double* input = new double[3];
     input[0] = 1;
     input[1] = 2;
@@ -36,11 +38,11 @@ int main(int argc, char** argv) {
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     my_net.addLayer(3,4,"test_layer1");
-    my_net.addLayer(4,3, "test_layer2");
-    // my_net.printNet();
-    //my_net.printNetWeights();
-    //my_net.performForwardProp();
-    //my_net.printNetActivations();
+    my_net.addLayer(4,1, "test_output");
+    my_net.printNet();
+    my_net.printNetWeights();
+    my_net.performForwardProp();
+    my_net.printNetActivations();
 
     //l1.forwardProp(input);
     //l1.printZ();

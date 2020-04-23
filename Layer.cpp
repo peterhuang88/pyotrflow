@@ -42,15 +42,21 @@ Layer::~Layer() {
 
 /***************** ACTUALLY USEFUL FUNCTIONS ***********************/
 
+void Layer::backProp() {
+    
+}
+
 void Layer::forwardProp(double* input) {
     // perform wTx 
+    /*
     for (int i = 0; i < this->num_neurons; i++) {
         double sum = 0;
         for (int j = 0; j < this->num_input; j++) {
             sum += this->W[i][j] * input[j];
         }
         this->Z[i] = sum + this->b;
-    }
+    }*/
+    mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
 
     // calculate activations
     for (int i = 0; i < this->num_neurons; i++) {

@@ -18,7 +18,7 @@ class DatasetParser {
         // getters
         int getNumObservations();
         int getNumInputs();
-        std::vector<std::vector<double>> getAllInput();
+        std::vector<std::vector<double> > getAllInput();
         std::vector<int> getAllOutput();
         double* getInput(int index);
         int getOutput(int index);
@@ -29,7 +29,7 @@ class DatasetParser {
         int type; // Type of dataset. 0 for sonar dataset (only dataset supported for now).
         int num_observations;
         int num_inputs;
-        std::vector<std::vector<double>> inputs;
+        std::vector<std::vector<double> > inputs;
         std::vector<int> outputs;
 };
 

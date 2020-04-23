@@ -68,7 +68,7 @@ int DatasetParser::getNumInputs() {
   return this->num_inputs;
 }
 
-std::vector<std::vector<double>> DatasetParser::getAllInput() {
+std::vector<std::vector<double> > DatasetParser::getAllInput() {
   return this->inputs;
 }
 
