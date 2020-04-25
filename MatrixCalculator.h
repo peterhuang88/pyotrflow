@@ -17,7 +17,10 @@ class MatrixCalculator {
         MatrixCalculator();
 
         // actually useful functions
-        void matrixTimesVector(double** mat, int num_rows, int num_cols, double* vec, int vec_size, double* result_vec);
+        void matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double* result_vec);
+        void vectorTimesScalar(double* vec, int vec_size, double scalar, double* result);
+        double** matrixTimesMatrix(double** mat1, int num_rows1, int num_cols1, double** mat2, int num_rows2, int num_cols2);
+        double** transposeMatrix(double** mat, int num_rows, int num_cols);
 
         // random helper functions
         

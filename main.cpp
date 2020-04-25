@@ -38,12 +38,15 @@ int main(int argc, char** argv) {
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     my_net.addLayer(3,4,"test_layer1");
-    my_net.addLayer(4,1, "test_output");
+    my_net.addLayer(4,2, "test_layer2");
+    my_net.addLayer(2,1, "test_output");
     my_net.printNet();
     my_net.printNetWeights();
     my_net.performForwardProp();
     my_net.printNetActivations();
 
+    my_net.initializeGradients();
+    my_net.printGradientSizes();
     //l1.forwardProp(input);
     //l1.printZ();
     //l1.printA();

@@ -27,6 +27,7 @@ class Net {
         
         // actually useful functions
         void addLayer(int num_input, int num_neurons, std::string name);
+        void initializeGradients();
         void performBackProp();
         void performForwardProp();
         void setInput(double* inp);
@@ -37,6 +38,7 @@ class Net {
         void printNet();
         void printNetActivations();
         void printNetWeights();
+        void printGradientSizes();
 
         
         LayerNode* head;
@@ -45,7 +47,7 @@ class Net {
     private:
         double lr;
         int input_size;
-        double* input;
+        double** input;
         double label;
         double* prediction;
         
