@@ -197,6 +197,7 @@ void Net::updateWeights() {
 void Net::trainNet(int num_epochs) {
     for (int i = 0; i < num_epochs; i++) {
         double cost = 0;
+        int num_right = 0;
         for (int j = 0; j < 208; j++) {
             double* temp_input = this->parser->getInput(j);
             int temp_output = this->parser->getOutput(j);
@@ -209,9 +210,17 @@ void Net::trainNet(int num_epochs) {
             //     printf("Example %d of epoch %d\n", j, i);
             // }
             //break;
+            /*
+            double pred = this->tail->curr->A[0][0];
+            pred = round(pred);
+            if (this->label == pred) {
+                num_right++;
+            }*/
         }
         cost /= -208.0;
+        //double acc = num_right / 208.0;
         printf("Epoch %d cost: %lf\n", i, cost);
+        printf("Epoch %d accuracy: %d\n", i, num_right);
         //break;
     }
 }
