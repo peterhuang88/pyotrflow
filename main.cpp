@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     Net my_net(0.01, 60);
-    my_net.addLayer(3,4,"test_layer1");
+    my_net.addLayer(60,4,"test_layer1");
     my_net.addLayer(4,2, "test_layer2");
     my_net.addLayer(2,1, "test_output");
     my_net.initializeNetWeights();
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
     //my_net.performBackProp();
     //my_net.printGradients();
     //my_net.updateWeights();
-    my_net.trainNet(5);
-    my_net.printNetWeights();
+    my_net.trainNet(10);
+    //my_net.printNetWeights();
     //my_net.printGradientSizes();
     //l1.forwardProp(input);
     //l1.printZ();

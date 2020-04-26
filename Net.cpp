@@ -204,15 +204,15 @@ void Net::trainNet(int num_epochs) {
             this->performForwardProp();
             this->performBackProp();
             this->updateWeights();
-            // cost += calculateLoss();
-            if (j % 5 == 0) {
-                printf("Example %d of epoch %d\n", j, i);
-            }
-            break;
+            cost += calculateLoss();
+            // if (j % 5 == 0) {
+            //     printf("Example %d of epoch %d\n", j, i);
+            // }
+            //break;
         }
         cost /= -208.0;
         printf("Epoch %d cost: %lf\n", i, cost);
-        break;
+        //break;
     }
 }
 
