@@ -4,14 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <pthread.h>
 
 #include "MatrixCalculator.h"
 
-MatrixCalculator::MatrixCalculator() {
-    // empty constructor...for now
+MatrixCalculator::MatrixCalculator(int numThreads) {
+    this->numThreads = numThreads;
+    this->threads = new pthread_t[numThreads];
 }
 
 void MatrixCalculator::matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double* result_vec) {
+    //matrixTimesMatrix(mat, num_rows, num_cols, vec, vec_size, 1, )
     for (int i = 0; i < num_rows; i++) {
         double sum = 0;
         for (int j = 0; j < num_cols; j++) {
@@ -28,18 +31,46 @@ void MatrixCalculator::vectorTimesScalar(double* vec, int vec_size, double scala
 }
 
 double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int num_cols1, double** mat2, int num_rows2, int num_cols2) {
-    // double** res = new double*[num_rows1]; 
-    // for (int i = 0; i < num_rows1; i++) {
-    //     res[i] = new double[num_cols2];
-    // }
     if (num_cols1 != num_rows2) {
         printf("Matrix times matrix dimension error\n");
         exit(1);
     }
-
+    
     double** res = this->allocate_2D(num_rows1, num_cols2);
 
-    for (int i = 0; i < num_rows1; i++) {
+    int new_num_threads = this->numThreads;
+    if(num_rows1 < this->numThreads) new_num_threads = num_rows1;
+    int partitionSize = num_rows1 / new_num_threads;
+    for(int i = 0; i < new_num_threads; i++) {
+        matmat_thread_args * threadData = (matmat_thread_args*)malloc(sizeof(matmat_thread_args));
+        if(i == numThreads - 1) {
+            threadData->partitionSize = num_rows1 - (i*partitionSize);
+            threadData->partitionStart = num_rows1 - threadData->partitionSize;
+        } else {
+            threadData->partitionSize = partitionSize;
+            threadData->partitionStart = i * partitionSize;
+        }
+       
+        threadData->tid = i;
+        
+         printf("Partition Size: %d, Tid: %d, pStart: %d\n", threadData->partitionSize, i, threadData->partitionStart);
+        threadData->mat1 = mat1;
+        threadData->num_rows1 = num_rows1;
+        threadData->num_cols1 = num_cols1;
+        threadData->mat2 = mat2;
+        threadData->num_rows2 = num_rows2;
+        threadData->num_cols2 = num_cols2;
+        threadData->res = res;
+
+        pthread_create(&(this->threads[i]), NULL, pMatTimesMat, (void *)threadData);
+    }
+
+    for (int i = 0; i < new_num_threads; i++)  
+        pthread_join(this->threads[i], NULL);     
+
+    return res;
+
+    /*for (int i = 0; i < num_rows1; i++) {
         for (int j = 0; j < num_cols2; j++) {
             double sum = 0;
             for (int k = 0; k < num_cols1; k++) {
@@ -48,12 +79,7 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
             res[i][j] = sum;
         }
     }
-
-    return res;
-
-    // printf("Mat1: %d rows %d columns \nMat2: %d rows %d columns\n", num_rows1, num_cols1, num_rows2, num_cols2);
-
-    // return NULL;
+    return res;*/
 }
 
 double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols) {
