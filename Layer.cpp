@@ -92,7 +92,8 @@ void Layer::forwardProp(double** input) {
         // this->A[i] = 1.0 / (1.0 + exp(-this->Z[i]));
 
         // TODO: comment out, this is only for testing
-        this->A[i][0] = this->Z[i];
+        // this->A[i][0] = this->Z[i];
+        this->A[i][0] = this->sigmoid(Z[i]);
     }
 }
 

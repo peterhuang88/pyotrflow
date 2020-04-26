@@ -72,7 +72,7 @@ void Net::initializeGradients() {
     // keep going until we're at the last node
     while (temp->prev != NULL) {
         // get dimensions of weights matrix in next layer
-        std::cout << temp->curr->name << " doing backprop\n";
+        
         temp_prev = temp->prev;
         temp_next = temp->next;
         next_w_cols = temp_next->curr->getNumInput();
@@ -103,7 +103,7 @@ void Net::performBackProp() {
     temp->curr->lastLayerBackProp(this->label, A_prev, A_prev_rows, A_prev_cols);
 
 
-    
+    // std::cout << temp->curr->name << " doing backprop\n";
     LayerNode* temp_next;//  = temp->next;
     LayerNode* temp_prev;
     double** W_next;
@@ -113,7 +113,9 @@ void Net::performBackProp() {
     int dZ_next_rows;
     int dZ_next_cols;
     // now handle everything up until first layer
+    temp = temp->prev;
     while (temp->prev != NULL) {
+        
         temp_next = temp->next;
         temp_prev = temp->prev;
 
@@ -133,6 +135,22 @@ void Net::performBackProp() {
 
         temp = temp->prev;
     }
+
+    temp_next = temp->next;
+    // handle last layer
+    W_next = temp_next->curr->W;
+    W_next_rows = temp_next->curr->num_neurons;
+    W_next_cols = temp_next->curr->num_input;
+
+    dZ_next = temp_next->curr->dZ;
+    dZ_next_rows = temp_next->curr->dZ_rows;
+    dZ_next_cols = temp_next->curr->dZ_cols;
+
+    A_prev = this->input;
+    A_prev_rows = this->input_size;
+    A_prev_cols = 1;
+
+    temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols);
 
 }
 
