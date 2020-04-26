@@ -25,6 +25,8 @@ class Layer {
         void forwardProp(double** input);
         void lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols);
         void initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_cols, int dB_rows, int dB_cols);
+        void initializeWeights();
+        void updateWeights(double lr);
 
         // random helper functions
         double** getActivations();

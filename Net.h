@@ -31,6 +31,8 @@ class Net {
         void performBackProp();
         void performForwardProp();
         void setInput(double* inp, double label);
+        void initializeNetWeights();
+        void updateWeights();
 
         // helper functions
         double** allocate_2D(int rows, int cols);

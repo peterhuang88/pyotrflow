@@ -39,7 +39,7 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
 
     // TODO: THIS NEEDS TO CHANGE
     // this->gradients = new double[num_neurons];
-    this->initializeTestWeights();
+    // this->initializeTestWeights();
 }
 
 Layer::~Layer() {
@@ -125,6 +125,29 @@ void Layer::initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_co
     //     this->dB[i] = new double[dB_cols];
     // }
     this->dB = this->allocate_2D(dB_rows, dB_cols);
+}
+
+void Layer::initializeWeights() {
+    srand(1);
+    for (int i = 0; i < this->num_neurons; i++) {
+        for (int j = 0; j < this->num_input; j++) {
+            double random = ((double) rand()) / (double) RAND_MAX;
+
+            this->W[i][j] = -4.0 + (random * 8); 
+        }
+    }
+}
+
+void Layer::updateWeights(double lr) {
+    for (int i = 0; i < num_neurons; i++) {
+        for (int j = 0; j < num_input; i++) {
+            this->W[i][j] -= lr * this->dW[i][j];
+        }
+    }
+
+    for (int i = 0; i < dB_rows; i++) {
+        this->b[i] -= lr * this->dB[i][0];
+    }
 }
 
 

@@ -28,18 +28,20 @@ int main(int argc, char** argv) {
     std::cout << "First observation output: " << parser.getOutput(0) << std::endl; 
 
     // There are also functions that return the entirety of the output/input data (as vectors) or the input/output for a given index as a pair. See DatasetParser.cpp for methods.
-    */ 
+    */
     double* input = new double[3];
     input[0] = 1;
-    input[1] = 2;
-    input[2] = 3;
-    my_net.setInput(input, 100);
+    input[1] = -1;
+    input[2] = 10;
+    my_net.setInput(input, 1);
 
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     my_net.addLayer(3,4,"test_layer1");
     my_net.addLayer(4,2, "test_layer2");
     my_net.addLayer(2,1, "test_output");
+    my_net.initializeNetWeights();
+
     my_net.printNet();
     my_net.printNetWeights();
     my_net.performForwardProp();
@@ -49,6 +51,7 @@ int main(int argc, char** argv) {
 
     my_net.performBackProp();
     my_net.printGradients();
+    my_net.updateWeights();
     //my_net.printGradientSizes();
     //l1.forwardProp(input);
     //l1.printZ();

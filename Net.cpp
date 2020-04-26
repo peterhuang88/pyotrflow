@@ -176,6 +176,23 @@ void Net::setInput(double* inp, double label) {
     this->label = label;
 }
 
+void Net::initializeNetWeights() {
+    LayerNode* temp = this->head;
+    while (temp != NULL) {
+        temp->curr->initializeWeights();
+        temp = temp->next;
+    }
+}
+
+void Net::updateWeights() {
+    LayerNode* temp = this->head;
+    
+    while (temp != NULL) {
+        temp->curr->updateWeights(this->lr);
+        temp = temp->next;     
+    }
+}
+
 /***************** HELPER FUNCTIONS ********************************/
 double** Net::allocate_2D(int rows, int cols) {
     int i;             /* Loop variable              */
