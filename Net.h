@@ -30,15 +30,18 @@ class Net {
         void initializeGradients();
         void performBackProp();
         void performForwardProp();
-        void setInput(double* inp);
+        void setInput(double* inp, double label);
 
         // helper functions
+        double** allocate_2D(int rows, int cols);
+        void free_2D(double** arr);
 
         // Debug Functions
         void printNet();
         void printNetActivations();
         void printNetWeights();
         void printGradientSizes();
+        void printGradients();
 
         
         LayerNode* head;

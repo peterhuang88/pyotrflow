@@ -19,21 +19,22 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
     this->name = name;
     this->marker = marker;
 
-    this->W = new double*[num_neurons];
-    for (int i = 0; i < num_neurons; i++) {
-        this->W[i] = new double[num_input];
-    }
+    // this->W = new double*[num_neurons];
+    // for (int i = 0; i < num_neurons; i++) {
+    //     this->W[i] = new double[num_input];
+    // }
+    this->W = this->allocate_2D(num_neurons, num_input);
+
     this->Z = new double[num_neurons];
 
-    this->A = new double*[num_neurons];
-    // TODO only works for fc layers
-    for (int i = 0; i < num_neurons; i++) {
-        this->A[i] = new double[1];
-    }
+    // this->A = new double*[num_neurons];
+    // // TODO only works for fc layers
+    // for (int i = 0; i < num_neurons; i++) {
+    //     this->A[i] = new double[1];
+    // }
+    this->A = this->allocate_2D(num_neurons, 1);
 
-    for (int i = 0; i < num_neurons; i++) {
-        this->W[i] = new double[num_input];
-    }
+    
     this->b = new double[num_neurons];
 
     // TODO: THIS NEEDS TO CHANGE
@@ -42,18 +43,38 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
 }
 
 Layer::~Layer() {
-    for (int i = 0; i < this->num_input; i++) {
-        delete [] W[i];
-    }
-    delete [] W;
-    delete [] Z;
-    delete [] b;
+    // for (int i = 0; i < this->num_input; i++) {
+    //     delete [] W[i];
+    // }
+    // delete [] W;
+    free_2D(this->W);
+    delete [] this->Z;
+    free_2D(this->A);
+    delete [] this->b;
 }
 
 /***************** ACTUALLY USEFUL FUNCTIONS ***********************/
 
-void Layer::backProp() {
-    
+void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols) {
+    // calculate dZ
+    double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols);
+    double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols);
+
+    double** deriv = this->sigmoid_derivative(this->Z, this->num_neurons);
+    mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ);
+
+}
+
+void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols) {
+    this->dZ[0][0] = this->A[0][0] - Y;
+    double** A_prev_transpose = mc.transposeMatrix(A_prev, A_prev_rows, A_prev_cols);
+    this->free_2D(this->dW);
+    this->dW = mc.matrixTimesMatrix(this->dZ, this->dZ_rows, this->dZ_cols, A_prev_transpose, A_prev_cols, A_prev_rows);
+    this->free_2D(this->dB);
+    this->dB = this->dZ;
+
+    // deallocate A_prev_transpose because we made alloc'd a new array for it
+    this->free_2D(A_prev_transpose);
 }
 
 void Layer::forwardProp(double** input) {
@@ -83,23 +104,26 @@ void Layer::initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_co
     this->dB_rows = dB_rows;
     this->dB_cols = dB_cols;
 
-    this->dZ = new double*[dZ_rows];
+    // this->dZ = new double*[dZ_rows];
     
-    for (int i = 0; i < dZ_rows; i++) {
-        this->dZ[i] = new double[dZ_cols];
-    }
+    // for (int i = 0; i < dZ_rows; i++) {
+    //     this->dZ[i] = new double[dZ_cols];
+    // }
+    this->dZ = this->allocate_2D(dZ_rows, dZ_cols);
 
-    this->dW = new double*[dW_rows];
+    // this->dW = new double*[dW_rows];
     
-    for (int i = 0; i < dW_rows; i++) {
-        this->dW[i] = new double[dW_cols];
-    }
+    // for (int i = 0; i < dW_rows; i++) {
+    //     this->dW[i] = new double[dW_cols];
+    // }
+    this->dW = this->allocate_2D(dW_rows, dW_cols);
 
-    this->dB = new double*[dB_rows];
+    // this->dB = new double*[dB_rows];
     
-    for (int i = 0; i < dW_rows; i++) {
-        this->dB[i] = new double[dB_cols];
-    }
+    // for (int i = 0; i < dB_rows; i++) {
+    //     this->dB[i] = new double[dB_cols];
+    // }
+    this->dB = this->allocate_2D(dB_rows, dB_cols);
 }
 
 
@@ -119,6 +143,45 @@ int Layer::getNumInput() {
 
 int Layer::getNumNeurons() {
     return this->num_neurons;
+}
+
+double** Layer::allocate_2D(int rows, int cols) {
+    int i;             /* Loop variable              */
+    double **pointers; /* The pointers for each row  */
+    double *array;     /* The actually array of ints */
+
+    /* Allocate memory for the rows X cols array */
+    array = (double *) malloc(rows * cols * sizeof(double));
+
+    /* Allocate the array of pointers, one per row */
+    pointers = (double**)malloc(rows * sizeof(double *)); 
+
+    /* Point each pointer at its corresponding row */
+    for (i = 0; i < rows; i++) {
+        pointers[i] = array + (cols * i);
+    }
+
+    return pointers;
+}
+
+void Layer::free_2D(double** arr) {
+    free(*arr);
+    free(arr);
+}
+
+double** Layer::sigmoid_derivative(double* input_z, int input_length) {
+    double** ret = this->allocate_2D(input_length, 1);
+
+    for (int i = 0; i < input_length; i++) {
+        double sig = this->sigmoid(input_z[i]);
+        ret[i][0] = sig * (1 - sig);
+    }
+
+    return ret; 
+}
+
+double Layer::sigmoid(double input) {
+    return 1.0 / (1.0 + exp(-input));
 }
 
 /***************** DEBUG FUNCTIONS *********************************/
@@ -166,4 +229,37 @@ void Layer::printGradientSizes() {
     printf("dZ: %d rows, %d cols\n", this->dZ_rows, this->dZ_cols);
     printf("dW: %d rows, %d cols\n", this->dW_rows, this->dW_cols);
     printf("dB: %d rows, %d cols\n", this->dB_rows, this->dB_cols);
+}
+
+void Layer::printdZ() {
+    std::cout << "Printing layer " << this->name << " dZ's\n";
+    for (int i = 0; i < this->dZ_rows; i++) {
+        for (int j = 0; j < this->dZ_cols; j++) {
+            printf("%lf ", this->dZ[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void Layer::printdW() {
+    std::cout << "Printing layer " << this->name << " dW's\n";
+    for (int i = 0; i < this->dW_rows; i++) {
+        for (int j = 0; j < this->dW_cols; j++) {
+            printf("%lf ", this->dW[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void Layer::printdB() {
+    std::cout << "Printing layer " << this->name << " dB's\n";
+    for (int i = 0; i < this->dB_rows; i++) {
+        for (int j = 0; j < this->dB_cols; j++) {
+            printf("%lf ", this->dB[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }

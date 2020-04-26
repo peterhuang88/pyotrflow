@@ -28,10 +28,16 @@ void MatrixCalculator::vectorTimesScalar(double* vec, int vec_size, double scala
 }
 
 double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int num_cols1, double** mat2, int num_rows2, int num_cols2) {
-    double** res = new double*[num_rows1]; 
-    for (int i = 0; i < num_rows1; i++) {
-        res[i] = new double[num_cols2];
+    // double** res = new double*[num_rows1]; 
+    // for (int i = 0; i < num_rows1; i++) {
+    //     res[i] = new double[num_cols2];
+    // }
+    if (num_cols1 != num_rows2) {
+        printf("Matrix times matrix dimension error\n");
+        exit(1);
     }
+
+    double** res = this->allocate_2D(num_rows1, num_cols2);
 
     for (int i = 0; i < num_rows1; i++) {
         for (int j = 0; j < num_cols2; j++) {
@@ -47,14 +53,15 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
 
     // printf("Mat1: %d rows %d columns \nMat2: %d rows %d columns\n", num_rows1, num_cols1, num_rows2, num_cols2);
 
-    return NULL;
+    // return NULL;
 }
 
 double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols) {
-    double** res = new double*[num_cols]; 
-    for (int i = 0; i < num_cols; i++) {
-        res[i] = new double[num_rows];
-    }
+    // double** res = new double*[num_cols]; 
+    // for (int i = 0; i < num_cols; i++) {
+    //     res[i] = new double[num_rows];
+    // }
+    double** res = this->allocate_2D(num_cols, num_rows);
 
     for (int i = 0; i < num_rows; i++) {
         for (int j = 0; j < num_cols; j++) {
@@ -63,6 +70,38 @@ double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_c
     }
 
     return res;
+}
+
+void MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, double** result_mat) {
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_cols; j++) {
+            result_mat[i][j] = mat1[i][j] * mat2[i][j];
+        }
+    }
+}
+
+double** MatrixCalculator::allocate_2D(int rows, int cols) {
+    int i;             /* Loop variable              */
+    double **pointers; /* The pointers for each row  */
+    double *array;     /* The actually array of ints */
+
+    /* Allocate memory for the rows X cols array */
+    array = (double *) malloc(rows * cols * sizeof(double));
+
+    /* Allocate the array of pointers, one per row */
+    pointers = (double**)malloc(rows * sizeof(double *)); 
+
+    /* Point each pointer at its corresponding row */
+    for (i = 0; i < rows; i++) {
+        pointers[i] = array + (cols * i);
+    }
+
+    return pointers;
+}
+
+void MatrixCalculator::free_2D(double** arr) {
+    free(*arr);
+    free(arr);
 }
 
 /*

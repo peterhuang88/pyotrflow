@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     input[0] = 1;
     input[1] = 2;
     input[2] = 3;
-    my_net.setInput(input);
+    my_net.setInput(input, 100);
 
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
@@ -46,7 +46,10 @@ int main(int argc, char** argv) {
     my_net.printNetActivations();
 
     my_net.initializeGradients();
-    my_net.printGradientSizes();
+
+    my_net.performBackProp();
+    my_net.printGradients();
+    //my_net.printGradientSizes();
     //l1.forwardProp(input);
     //l1.printZ();
     //l1.printA();
