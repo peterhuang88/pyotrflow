@@ -68,13 +68,13 @@ void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double**
 void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols) {
     this->dZ[0][0] = this->A[0][0] - Y;
     double** A_prev_transpose = mc.transposeMatrix(A_prev, A_prev_rows, A_prev_cols);
-    this->free_2D(this->dW);
+    //this->free_2D(this->dW);
     this->dW = mc.matrixTimesMatrix(this->dZ, this->dZ_rows, this->dZ_cols, A_prev_transpose, A_prev_cols, A_prev_rows);
-    this->free_2D(this->dB);
+    //this->free_2D(this->dB);
     this->dB = this->dZ;
 
     // deallocate A_prev_transpose because we made alloc'd a new array for it
-    this->free_2D(A_prev_transpose);
+    //this->free_2D(A_prev_transpose);
 }
 
 void Layer::forwardProp(double** input) {
@@ -140,7 +140,7 @@ void Layer::initializeWeights() {
 
 void Layer::updateWeights(double lr) {
     for (int i = 0; i < num_neurons; i++) {
-        for (int j = 0; j < num_input; i++) {
+        for (int j = 0; j < num_input; j++) {
             this->W[i][j] -= lr * this->dW[i][j];
         }
     }

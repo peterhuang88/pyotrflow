@@ -10,7 +10,7 @@
 
 int main(int argc, char** argv) {
     // Layer layer1(5);
-    Net my_net(0.01, 3);
+    
     //my_net.addLayer(3,3,"layer1");
     //my_net.addLayer(3,4,"layer2");
     //my_net.printNet();
@@ -29,29 +29,33 @@ int main(int argc, char** argv) {
 
     // There are also functions that return the entirety of the output/input data (as vectors) or the input/output for a given index as a pair. See DatasetParser.cpp for methods.
     */
-    double* input = new double[3];
-    input[0] = 1;
-    input[1] = -1;
-    input[2] = 10;
-    my_net.setInput(input, 1);
+    
+    // double* input = new double[3];
+    // input[0] = 1;
+    // input[1] = -1;
+    // input[2] = 10;
+    // my_net.setInput(input, 1);
 
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
+    Net my_net(0.01, 60);
     my_net.addLayer(3,4,"test_layer1");
     my_net.addLayer(4,2, "test_layer2");
     my_net.addLayer(2,1, "test_output");
     my_net.initializeNetWeights();
 
-    my_net.printNet();
-    my_net.printNetWeights();
-    my_net.performForwardProp();
-    my_net.printNetActivations();
+    //my_net.printNet();
+    
+    //my_net.performForwardProp();
+    //my_net.printNetActivations();
 
     my_net.initializeGradients();
 
-    my_net.performBackProp();
-    my_net.printGradients();
-    my_net.updateWeights();
+    //my_net.performBackProp();
+    //my_net.printGradients();
+    //my_net.updateWeights();
+    my_net.trainNet(5);
+    my_net.printNetWeights();
     //my_net.printGradientSizes();
     //l1.forwardProp(input);
     //l1.printZ();

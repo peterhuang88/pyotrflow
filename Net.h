@@ -10,6 +10,7 @@
 #include <string>
 
 #include "Layer.h"
+#include "DatasetParser.h"
 
 #ifndef NET_H
 #define NET_H
@@ -33,6 +34,8 @@ class Net {
         void setInput(double* inp, double label);
         void initializeNetWeights();
         void updateWeights();
+        void trainNet(int num_epochs);
+        double calculateLoss();
 
         // helper functions
         double** allocate_2D(int rows, int cols);
@@ -55,6 +58,7 @@ class Net {
         double** input;
         double label;
         double* prediction;
+        DatasetParser* parser;
         
 };
 

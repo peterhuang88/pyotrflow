@@ -23,6 +23,7 @@ Net::Net(double lr, int input_size) {
     this->head = NULL;
     this->tail = NULL;
     this->label = 0;
+    this->parser = new DatasetParser("./data/sonar.all-data", 0);
 }
 
 Net::~Net() {
@@ -191,6 +192,34 @@ void Net::updateWeights() {
         temp->curr->updateWeights(this->lr);
         temp = temp->next;     
     }
+}
+
+void Net::trainNet(int num_epochs) {
+    for (int i = 0; i < num_epochs; i++) {
+        double cost = 0;
+        for (int j = 0; j < 208; j++) {
+            double* temp_input = this->parser->getInput(j);
+            int temp_output = this->parser->getOutput(j);
+            this->setInput(temp_input, temp_output);
+            this->performForwardProp();
+            this->performBackProp();
+            this->updateWeights();
+            // cost += calculateLoss();
+            if (j % 5 == 0) {
+                printf("Example %d of epoch %d\n", j, i);
+            }
+            break;
+        }
+        cost /= -208.0;
+        printf("Epoch %d cost: %lf\n", i, cost);
+        break;
+    }
+}
+
+double Net::calculateLoss() {
+    double pred = this->tail->curr->A[0][0];
+    double Y = this->label;
+    return (Y * log(pred) - (1-Y)*log(1-pred));
 }
 
 /***************** HELPER FUNCTIONS ********************************/
