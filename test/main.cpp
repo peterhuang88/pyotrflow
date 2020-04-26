@@ -21,34 +21,32 @@ int main(int argc, char** argv) {
         mat2[i] = new double[num_cols2];
     }
 
+    double** res = new double*[num_rows2];
+    for (int i = 0; i < num_rows2; i++) {
+        res[i] = new double[num_cols2];
+    }
+
     // Generating random values in mat1 and mat2 
     for (int i = 0; i < num_rows1; i++) { 
         for (int j = 0; j < num_cols1; j++) { 
-            mat1[i][j] = rand() % 10; 
+            mat1[i][j] = 2; 
         } 
     } 
 
     for (int i = 0; i < num_rows2; i++) { 
         for (int j = 0; j < num_cols2; j++) { 
-            mat2[i][j] = rand() % 10; 
+            mat2[i][j] = 2; 
         } 
     } 
 
     int numThreads = 16;
     MatrixCalculator mc(numThreads);
 
-    for (int i = 0; i < num_rows1; i++) {
-        for (int j = 0; j < num_cols1; j++) {
-            printf("%lf ", mat1[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
     //double** temp = mc.matrixTimesMatrix(mat1, num_rows1, num_cols1, mat2, num_rows2, num_cols2);
-    double** temp = mc.transposeMatrix(mat1, num_rows1, num_cols1);
+    mc.hadamardProduct(mat1, mat2, num_rows1, num_cols1, res);
     for (int i = 0; i < num_rows1; i++) {
         for (int j = 0; j < num_cols1; j++) {
-            printf("%lf ", temp[i][j]);
+            printf("%lf ", res[i][j]);
         }
         printf("\n");
     }
