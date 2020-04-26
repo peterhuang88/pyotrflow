@@ -72,6 +72,7 @@ void Net::initializeGradients() {
     // keep going until we're at the last node
     while (temp->prev != NULL) {
         // get dimensions of weights matrix in next layer
+        std::cout << temp->curr->name << " doing backprop\n";
         temp_prev = temp->prev;
         temp_next = temp->next;
         next_w_cols = temp_next->curr->getNumInput();

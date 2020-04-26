@@ -9,7 +9,7 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^
+	$(CC) -g -o $@ $^
 objects/%.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
 clean:

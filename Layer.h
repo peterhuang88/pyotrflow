@@ -60,10 +60,11 @@ class Layer {
         int num_neurons;
         int num_input;
         double** W; // this is actually W_t
+        std::string name;
 
     private:
         
-        std::string name; 
+         
         int marker; // 0 = nothing special, 1 = head, 2 = tail
         MatrixCalculator mc;
 
