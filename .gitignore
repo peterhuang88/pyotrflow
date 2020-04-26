@@ -2,6 +2,8 @@ serial/*.o
 parallel/*.o
 serial/neuralnet*
 parallel/neuralnet*
+test/*.o
+*.exe
 /data
 /.vscode
 outfile
