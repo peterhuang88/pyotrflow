@@ -1,5 +1,7 @@
-*.o
-neuralnet*
+serial/*.o
+parallel/*.o
+serial/neuralnet*
+parallel/neuralnet*
 /data
 /.vscode
 outfile
