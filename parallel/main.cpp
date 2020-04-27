@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
-    Net my_net(0.01, 60);
+    Net my_net(0.01, 60, 16);
     my_net.addLayer(60,10,"test_layer1");
     my_net.addLayer(10,10,"test_layer2");
     my_net.addLayer(10,10,"test_layer3");

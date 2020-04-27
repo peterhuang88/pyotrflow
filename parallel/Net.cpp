@@ -12,7 +12,7 @@
 
 #include "Net.h"
 
-Net::Net(double lr, int input_size) {
+Net::Net(double lr, int input_size, int numThreads) {
     this->lr = lr;
     this->input_size = input_size;
     // this->input = new double*[input_size];
@@ -23,7 +23,12 @@ Net::Net(double lr, int input_size) {
     this->head = NULL;
     this->tail = NULL;
     this->label = 0;
+    this->num_right = 0;
+    this->cost = 0;
     this->parser = new DatasetParser("../data/sonar.all-data", 0);
+    this->num_threads = numThreads;
+    this->threads = new pthread_t[numThreads];
+    barrier_init(&(this->barrier));
 }
 
 Net::~Net() {
@@ -168,13 +173,26 @@ void Net::performForwardProp() {
     }
 }
 
-void Net::setInput(double* inp, double label) {
+void Net::setInput(double* inp, double label, int tid) {
     // make this faster with memcpy
-    for (int i = 0; i < this->input_size; i++) {
+
+    // TODO: remove assumption that input_size >= num_threads
+    int partitionSize = this->input_size / this->num_threads;
+    int partitionStart = 0;
+    if(tid == this->num_threads - 1) {
+        partitionSize = this->input_size - (tid*partitionSize);
+        partitionStart = this->input_size - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
+    }
+
+    for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
         this->input[i][0] = inp[i];
     }
 
-    this->label = label;
+    if(tid == 0) {
+        this->label = label;
+    }
 }
 
 void Net::initializeNetWeights() {
@@ -194,31 +212,59 @@ void Net::updateWeights() {
     }
 }
 
+void * Net::pTrain(void * data) {
+    thread_args * args = (thread_args*) data;
+    int num_observations = this->parser->getNumObservations();
+   
+    for (int j = 0; j < num_observations; j++) {
+        double* temp_input = this->parser->getInput(j);
+        int temp_output = this->parser->getOutput(j);
+        this->setInput(temp_input, temp_output, args->tid);
+        barrier_exec(&(this->barrier), this->num_threads);
+        this->performForwardProp();
+        this->performBackProp();
+        this->updateWeights();
+        this->cost += calculateLoss();
+        // if (j % 5 == 0) {
+        //     printf("Example %d of epoch %d\n", j, i);
+        // }
+        //break;
+        
+        double pred = this->tail->curr->A[0][0];
+        pred = round(pred);
+        if (this->label == pred) {
+            this->num_right++;
+        }
+    }
+}
+
 void Net::trainNet(int num_epochs) {
     for (int i = 0; i < num_epochs; i++) {
-        double cost = 0;
-        int num_right = 0;
-        for (int j = 0; j < 208; j++) {
-            double* temp_input = this->parser->getInput(j);
-            int temp_output = this->parser->getOutput(j);
-            this->setInput(temp_input, temp_output);
-            this->performForwardProp();
-            this->performBackProp();
-            this->updateWeights();
-            cost += calculateLoss();
-            // if (j % 5 == 0) {
-            //     printf("Example %d of epoch %d\n", j, i);
-            // }
-            //break;
-            
-            double pred = this->tail->curr->A[0][0];
-            pred = round(pred);
-            if (this->label == pred) {
-                num_right++;
-            }
+        this->cost = 0;
+        this->num_right = 0;
+        int num_observations = this->parser->getNumObservations();
+    
+        for(int i = 0; i < this->num_threads; i++) {
+            thread_args * threadData = (thread_args*)malloc(sizeof(thread_args));
+            /*if(i == numThreads - 1) {
+                threadData->partitionSize = num_observations - (i*partitionSize);
+                threadData->partitionStart = num_observations - threadData->partitionSize;
+            } else {
+                threadData->partitionSize = partitionSize;
+                threadData->partitionStart = i * partitionSize;
+            }*/
+        
+            threadData->tid = i;
+
+            pthread_create(&(this->threads[i]), NULL, this->pTrain, (void *)threadData);
         }
-        cost /= -208.0;
-        double acc = num_right / 208.0;
+
+        for (int i = 0; i < this->num_threads; i++) {
+            pthread_join(this->threads[i], NULL);     
+        }
+        
+        this->cost /= -(double)num_observations;
+        double acc = this->num_right / (double)num_observations;
         printf("Epoch %d cost: %lf\n", i, cost);
         // printf("Epoch %d accuracy: %d\n", i, num_right);
         printf("Epoch %d accuracy: %lf\n", i, acc);
@@ -255,6 +301,25 @@ double** Net::allocate_2D(int rows, int cols) {
 void Net::free_2D(double** arr) {
     free(*arr);
     free(arr);
+}
+
+/**************** PARALLEL FUNCTIONS *******************************/
+void Net::barrier_init(barrier_t *b) {
+  b->count = 0;
+  pthread_mutex_init(&(b->countLock), NULL);
+  pthread_cond_init(&(b->okToProceed), NULL);
+}
+
+void Net::barrier_exec(barrier_t *b, int numThreads) {
+  pthread_mutex_lock(&(b->countLock));
+  b->count++;
+  if(b->count == numThreads) {
+    b->count = 0;
+    pthread_cond_broadcast(&(b->okToProceed));
+  } else {
+    while(pthread_cond_wait(&(b->okToProceed), &(b->countLock)) != 0);
+  }
+  pthread_mutex_unlock(&(b->countLock));
 }
 
 
