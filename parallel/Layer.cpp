@@ -26,7 +26,8 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
     // }
     this->W = this->allocate_2D(num_neurons, num_input);
 
-    this->Z = new double[num_neurons];
+    // this->Z = new double[num_neurons];
+    this->Z = this->allocate_2D(num_neurons, 1);
 
     // this->A = new double*[num_neurons];
     // // TODO only works for fc layers
@@ -49,7 +50,8 @@ Layer::~Layer() {
     // }
     // delete [] W;
     free_2D(this->W);
-    delete [] this->Z;
+    // delete [] this->Z;
+    free_2D(this->Z);
     free_2D(this->A);
     delete [] this->b;
 }
@@ -61,7 +63,7 @@ void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double**
     double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols);
     double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols);
 
-    double** deriv = this->sigmoid_derivative(this->Z, this->num_neurons);
+    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons);
     mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ);
 
 }
@@ -81,11 +83,13 @@ void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_
 void Layer::forwardProp(double** input) {
     // perform wTx 
     
-    mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
+    // mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
+    this->Z = mc.matrixTimesMatrix(this->W, num_neurons, num_input, input, num_input, 1);
     // add bias to each z
     // TODO: potentially parallelize
     for (int i = 0; i < this->num_neurons; i++) {
-        this->Z[i] += this->b[i];
+        // this->Z[i] += this->b[i];
+        this->Z[i][0] += this->b[i];
     }
 
     // calculate activations
@@ -94,7 +98,7 @@ void Layer::forwardProp(double** input) {
 
         // TODO: comment out, this is only for testing
         // this->A[i][0] = this->Z[i];
-        this->A[i][0] = this->sigmoid(Z[i]);
+        this->A[i][0] = this->sigmoid(Z[i][0]);
     }
 }
 

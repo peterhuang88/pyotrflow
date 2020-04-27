@@ -64,6 +64,7 @@ class Layer {
         double** W; // this is actually W_t
         std::string name;
         double** A; // A = activation_func(Z)
+        double** Z;
 
     private:
         
@@ -73,7 +74,7 @@ class Layer {
 
         
         double* b; // bias
-        double* Z; // wTx + b
+        // double* Z; // wTx + b
         
         // double** dZ;
         // double** dW;
