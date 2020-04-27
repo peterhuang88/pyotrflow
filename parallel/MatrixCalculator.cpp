@@ -116,11 +116,30 @@ double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_c
 }
 
 void MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, double** result_mat) {
-    for (int i = 0; i < num_rows; i++) {
-        for (int j = 0; j < num_cols; j++) {
-            result_mat[i][j] = mat1[i][j] * mat2[i][j];
+    int new_num_threads = this->numThreads;
+    if(num_rows < this->numThreads) new_num_threads = num_rows;
+    int partitionSize = num_rows / new_num_threads;
+    for(int i = 0; i < new_num_threads; i++) {
+        hadamard_thread_args * threadData = (hadamard_thread_args*)malloc(sizeof(hadamard_thread_args));
+        if(i == numThreads - 1) {
+            threadData->partitionSize = num_rows - (i*partitionSize);
+            threadData->partitionStart = num_rows - threadData->partitionSize;
+        } else {
+            threadData->partitionSize = partitionSize;
+            threadData->partitionStart = i * partitionSize;
         }
+       
+        threadData->tid = i;
+        threadData->mat1 = mat1;
+        threadData->mat2 = mat2;
+        threadData->num_cols = num_cols;
+        threadData->res = result_mat;
+
+        pthread_create(&(this->threads[i]), NULL, pHadamardProd, (void *)threadData);
     }
+
+    for (int i = 0; i < new_num_threads; i++)  
+        pthread_join(this->threads[i], NULL);     
 }
 
 double** MatrixCalculator::allocate_2D(int rows, int cols) {
