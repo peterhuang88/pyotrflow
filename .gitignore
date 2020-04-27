@@ -7,3 +7,5 @@ test/*.o
 /data
 /.vscode
 outfile
+*.o
+neuralnet

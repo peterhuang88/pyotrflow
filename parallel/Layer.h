@@ -69,7 +69,7 @@ class Layer {
         
          
         int marker; // 0 = nothing special, 1 = head, 2 = tail
-        MatrixCalculator mc;
+        //MatrixCalculator mc;
 
         
         double* b; // bias

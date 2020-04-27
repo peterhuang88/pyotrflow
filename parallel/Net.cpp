@@ -23,7 +23,7 @@ Net::Net(double lr, int input_size) {
     this->head = NULL;
     this->tail = NULL;
     this->label = 0;
-    this->parser = new DatasetParser("./data/sonar.all-data", 0);
+    this->parser = new DatasetParser("../data/sonar.all-data", 0);
 }
 
 Net::~Net() {
@@ -210,17 +210,18 @@ void Net::trainNet(int num_epochs) {
             //     printf("Example %d of epoch %d\n", j, i);
             // }
             //break;
-            /*
+            
             double pred = this->tail->curr->A[0][0];
             pred = round(pred);
             if (this->label == pred) {
                 num_right++;
-            }*/
+            }
         }
         cost /= -208.0;
-        //double acc = num_right / 208.0;
+        double acc = num_right / 208.0;
         printf("Epoch %d cost: %lf\n", i, cost);
-        printf("Epoch %d accuracy: %d\n", i, num_right);
+        // printf("Epoch %d accuracy: %d\n", i, num_right);
+        printf("Epoch %d accuracy: %lf\n", i, acc);
         //break;
     }
 }

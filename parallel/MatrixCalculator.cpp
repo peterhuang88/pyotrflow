@@ -13,6 +13,12 @@ MatrixCalculator::MatrixCalculator(int numThreads) {
     this->threads = new pthread_t[numThreads];
 }
 
+// MatrixCalculator::MatrixCalculator() {
+//     int numThreads = 4;
+//     this->numThreads = numThreads;
+//     this->threads = new pthread_t[numThreads];
+// }
+
 void MatrixCalculator::matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double* result_vec) {
     //matrixTimesMatrix(mat, num_rows, num_cols, vec, vec_size, 1, )
     for (int i = 0; i < num_rows; i++) {
@@ -61,8 +67,9 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
         pthread_create(&(this->threads[i]), NULL, pMatTimesMat, (void *)threadData);
     }
 
-    for (int i = 0; i < new_num_threads; i++)  
+    for (int i = 0; i < new_num_threads; i++) {
         pthread_join(this->threads[i], NULL);     
+    }
 
     return res;
 
