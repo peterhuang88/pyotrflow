@@ -34,6 +34,16 @@ struct transpose_thread_args {
     double **res;
 };
 
+struct hadamard_thread_args {
+    int tid;
+    double ** mat1;
+    double ** mat2;
+    int num_cols;
+    int partitionSize;
+    int partitionStart;
+    double **res;
+};
+
 class MatrixCalculator {
     public:
         MatrixCalculator(int numThreads);
@@ -70,11 +80,20 @@ class MatrixCalculator {
 
         static void* pTransposeMat(void * thread_args) {
             transpose_thread_args * args = (transpose_thread_args*) thread_args;
-                for (int i = args->partitionStart; i < args->partitionStart + args->partitionSize; i++) {
-                    for (int j = 0; j < args->num_cols; j++) {
-                        args->res[j][i] = args->mat[i][j];
-                    }
+            for (int i = args->partitionStart; i < args->partitionStart + args->partitionSize; i++) {
+                for (int j = 0; j < args->num_cols; j++) {
+                    args->res[j][i] = args->mat[i][j];
                 }
+            }
+        }  
+
+        static void* pHadamardProd(void * thread_args) {
+            hadamard_thread_args * args = (hadamard_thread_args*) thread_args;
+            for (int i = args->partitionStart; i < args->partitionStart + args->partitionSize; i++) {
+                for (int j = 0; j < args->num_cols; j++) {
+                    args->res[i][j] = args->mat1[i][j] * args->mat2[i][j];
+                }
+            }
         }  
 };
 
