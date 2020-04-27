@@ -23,7 +23,7 @@ Net::Net(double lr, int input_size) {
     this->head = NULL;
     this->tail = NULL;
     this->label = 0;
-    this->parser = new DatasetParser("./data/sonar.all-data", 0);
+    this->parser = new DatasetParser("../data/sonar.all-data", 0);
 }
 
 Net::~Net() {
