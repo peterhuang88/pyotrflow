@@ -44,7 +44,7 @@ Net::~Net() {
 void Net::addLayer(int num_input, int num_neurons, std::string name) {
     if (head == NULL) {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
-        temp->curr = new Layer(num_input, num_neurons,1, name);
+        temp->curr = new Layer(num_input, num_neurons,1, name, this->num_threads);
         temp->next = NULL;
         temp->prev = NULL;
 
@@ -53,7 +53,7 @@ void Net::addLayer(int num_input, int num_neurons, std::string name) {
         // temp->curr->printLayerWeights();
     } else {
         LayerNode* temp = (LayerNode*) malloc(sizeof(LayerNode));
-        temp->curr = new Layer(num_input, num_neurons, 0, name);
+        temp->curr = new Layer(num_input, num_neurons, 0, name, this->num_threads);
         temp->next = NULL;
         temp->prev = this->tail; // set new node's prev to the tail
 
@@ -220,7 +220,9 @@ void * Net::pTrain(void * data) {
         double* temp_input = this->parser->getInput(j);
         int temp_output = this->parser->getOutput(j);
         this->setInput(temp_input, temp_output, args->tid);
-        barrier_exec(&(this->barrier), this->num_threads);
+
+        this->barrier_exec(&(this->barrier), this->num_threads);
+
         this->performForwardProp();
         this->performBackProp();
         this->updateWeights();

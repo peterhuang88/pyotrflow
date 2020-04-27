@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-
+#include <pthread.h>
 
 #include "Layer.h"
 
@@ -14,7 +14,14 @@ MatrixCalculator mc(4);
 * num_neurons = number of neurons in current layer
 * num_input = number of inputs from previous layer e.g. number of neurons in previous layer
 */
-Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
+
+typedef struct {
+  pthread_mutex_t countLock;
+  pthread_cond_t okToProceed;
+  int count;
+} barrier_t;
+
+Layer::Layer(int num_input, int num_neurons, int marker, std::string name, int num_threads) {
     this->num_neurons = num_neurons;
     this->num_input = num_input;
     this->name = name;
@@ -37,6 +44,7 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
 
     
     this->b = new double[num_neurons];
+    this->num_threads = num_threads;
 
     // TODO: THIS NEEDS TO CHANGE
     // this->gradients = new double[num_neurons];
@@ -78,10 +86,12 @@ void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_
     //this->free_2D(A_prev_transpose);
 }
 
-void Layer::forwardProp(double** input) {
+void Layer::forwardProp(double** input, int tid, barrier_t barrier) {
     // perform wTx 
     
-    mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
+    mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z, tid);
+
+    this->barrier_exec(&barrier, this->num_threads);
     // add bias to each z
     // TODO: potentially parallelize
     for (int i = 0; i < this->num_neurons; i++) {
@@ -207,6 +217,26 @@ double** Layer::sigmoid_derivative(double* input_z, int input_length) {
 
 double Layer::sigmoid(double input) {
     return 1.0 / (1.0 + exp(-input));
+}
+
+/***************** PARALLEL FUNCTIONS ******************************/
+
+void Layer::barrier_init(barrier_t *b) {
+  b->count = 0;
+  pthread_mutex_init(&(b->countLock), NULL);
+  pthread_cond_init(&(b->okToProceed), NULL);
+}
+
+void Layer::barrier_exec(barrier_t *b, int numThreads) {
+  pthread_mutex_lock(&(b->countLock));
+  b->count++;
+  if(b->count == numThreads) {
+    b->count = 0;
+    pthread_cond_broadcast(&(b->okToProceed));
+  } else {
+    while(pthread_cond_wait(&(b->okToProceed), &(b->countLock)) != 0);
+  }
+  pthread_mutex_unlock(&(b->countLock));
 }
 
 /***************** DEBUG FUNCTIONS *********************************/
