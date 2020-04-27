@@ -20,9 +20,9 @@ MatrixCalculator::MatrixCalculator(int numThreads) {
 //     this->threads = new pthread_t[numThreads];
 // }
 
-void MatrixCalculator::matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double** result_vec, int tid, int num_threads, barrier_t barrier) {
+/*void MatrixCalculator::matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double** result_vec, int tid, int num_threads, barrier_t barrier) {
     result_vec = matrixTimesMatrix(mat, num_rows, num_cols, vec, vec_size, 1, tid, num_threads, barrier);
-}
+}*/
 
 void MatrixCalculator::vectorTimesScalar(double* vec, int vec_size, double scalar, double* result) {
     for (int i = 0; i < vec_size; i++) {
@@ -31,15 +31,15 @@ void MatrixCalculator::vectorTimesScalar(double* vec, int vec_size, double scala
 }
 
 double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int num_cols1, double** mat2, int num_rows2, int num_cols2, int tid, int num_threads, barrier_t barrier) {
-    if (num_cols1 != num_rows2) {
-        printf("Matrix times matrix dimension error\n");
-        exit(1);
-    }
-    
     if(tid == 0) {
+        if (num_cols1 != num_rows2) {
+            printf("Matrix times matrix dimension error\n");
+            exit(1);
+        }
+
         this->res = this->allocate_2D(num_rows1, num_cols2);
     }
-    
+
     int new_num_threads = num_threads;
     if(num_rows1 < num_threads) new_num_threads = num_rows1;
     int partitionSize = num_rows1 / new_num_threads;

@@ -160,14 +160,17 @@ void Net::performBackProp() {
 
 }
 
-void Net::performForwardProp() {
+void Net::performForwardProp(int tid) {
     double** A_prev = this->input;
 
     LayerNode* temp = this->head;
 
     while (temp != NULL) {
         // forward prop for given layer
-        temp->curr->forwardProp(A_prev);
+        temp->curr->forwardProp(A_prev, tid, this->barrier);
+
+        this->barrier_exec(&barrier, this->num_threads);
+        
         A_prev = temp->curr->getActivations();
         temp = temp->next;
     }
@@ -223,7 +226,7 @@ void * Net::pTrain(void * data) {
 
         this->barrier_exec(&(this->barrier), this->num_threads);
 
-        this->performForwardProp();
+        this->performForwardProp(args->tid);
         this->performBackProp();
         this->updateWeights();
         this->cost += calculateLoss();

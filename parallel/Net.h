@@ -48,7 +48,7 @@ class Net {
         void addLayer(int num_input, int num_neurons, std::string name);
         void initializeGradients();
         void performBackProp();
-        void performForwardProp();
+        void performForwardProp(int tid);
         void setInput(double* inp, double label, int tid);
         void initializeNetWeights();
         void updateWeights();

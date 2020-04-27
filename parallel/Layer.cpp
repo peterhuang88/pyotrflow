@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #include "Layer.h"
+#include "Net.h"
 
 MatrixCalculator mc(4);
 
@@ -14,12 +15,6 @@ MatrixCalculator mc(4);
 * num_neurons = number of neurons in current layer
 * num_input = number of inputs from previous layer e.g. number of neurons in previous layer
 */
-
-typedef struct {
-  pthread_mutex_t countLock;
-  pthread_cond_t okToProceed;
-  int count;
-} barrier_t;
 
 Layer::Layer(int num_input, int num_neurons, int marker, std::string name, int num_threads) {
     this->num_neurons = num_neurons;
@@ -33,7 +28,8 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name, int n
     // }
     this->W = this->allocate_2D(num_neurons, num_input);
 
-    this->Z = new double[num_neurons];
+    // this->Z = new double[num_neurons];
+    this->Z = this->allocate_2D(num_neurons, 1);
 
     // this->A = new double*[num_neurons];
     // // TODO only works for fc layers
@@ -57,7 +53,8 @@ Layer::~Layer() {
     // }
     // delete [] W;
     free_2D(this->W);
-    delete [] this->Z;
+    // delete [] this->Z;
+    free_2D(this->Z);
     free_2D(this->A);
     delete [] this->b;
 }
@@ -69,7 +66,7 @@ void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double**
     double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols);
     double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols);
 
-    double** deriv = this->sigmoid_derivative(this->Z, this->num_neurons);
+    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons);
     mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ);
 
 }
@@ -89,22 +86,44 @@ void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_
 void Layer::forwardProp(double** input, int tid, barrier_t barrier) {
     // perform wTx 
     
-    mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z, tid);
+    this->Z = mc.matrixTimesMatrix(this->W, num_neurons, num_input, input, num_input, 1, tid, this->num_threads, barrier);
 
     this->barrier_exec(&barrier, this->num_threads);
+    // mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
+    
     // add bias to each z
     // TODO: potentially parallelize
-    for (int i = 0; i < this->num_neurons; i++) {
-        this->Z[i] += this->b[i];
+
+    int new_num_threads = num_threads;
+    if(this->num_neurons < num_threads) new_num_threads = this->num_neurons;
+    int partitionSize = this->num_neurons / new_num_threads;
+    int partitionStart = 0;
+    if(tid == new_num_threads - 1) {
+        partitionSize = this->num_neurons - (tid*partitionSize);
+        partitionStart = this->num_neurons - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
     }
 
-    // calculate activations
-    for (int i = 0; i < this->num_neurons; i++) {
-        // this->A[i] = 1.0 / (1.0 + exp(-this->Z[i]));
+    if(tid < new_num_threads) {
+        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+            // this->Z[i] += this->b[i];
+            this->Z[i][0] += this->b[i];
+        }
+    }
 
-        // TODO: comment out, this is only for testing
-        // this->A[i][0] = this->Z[i];
-        this->A[i][0] = this->sigmoid(Z[i]);
+    this->barrier_exec(&barrier, this->num_threads);
+
+    // calculate activations
+    // TODO: combine this loop into above loop?
+    if(tid < new_num_threads) {
+        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+            // this->A[i] = 1.0 / (1.0 + exp(-this->Z[i]));
+
+            // TODO: comment out, this is only for testing
+            // this->A[i][0] = this->Z[i];
+            this->A[i][0] = this->sigmoid(Z[i][0]);
+        }
     }
 }
 

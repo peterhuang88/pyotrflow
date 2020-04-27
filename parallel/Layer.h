@@ -14,6 +14,12 @@
 #ifndef LAYER_H
 #define LAYER_H
 
+typedef struct {
+  pthread_mutex_t countLock;
+  pthread_cond_t okToProceed;
+  int count;
+} barrier_t;
+
 class Layer {
     public:
         Layer(int num_input, int num_neurons, int marker, std::string name, int num_threads);
@@ -68,6 +74,7 @@ class Layer {
         double** W; // this is actually W_t
         std::string name;
         double** A; // A = activation_func(Z)
+        double** Z;
 
     private:
         
@@ -77,7 +84,7 @@ class Layer {
 
         
         double* b; // bias
-        double* Z; // wTx + b
+        //double* Z; // wTx + b
         int num_threads;
         
         // double** dZ;
