@@ -8,6 +8,7 @@
 
 #include "Layer.h"
 
+MatrixCalculator mc(4);
 
 /**
 * num_neurons = number of neurons in current layer

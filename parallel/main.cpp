@@ -39,9 +39,13 @@ int main(int argc, char** argv) {
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     Net my_net(0.01, 60);
-    my_net.addLayer(60,4,"test_layer1");
-    my_net.addLayer(4,2, "test_layer2");
-    my_net.addLayer(2,1, "test_output");
+    my_net.addLayer(60,10,"test_layer1");
+    my_net.addLayer(10,10,"test_layer2");
+    my_net.addLayer(10,10,"test_layer3");
+    my_net.addLayer(10,10,"test_layer4");
+    my_net.addLayer(10,1,"output_layer");
+    //my_net.addLayer(4,2, "test_layer2");
+    //my_net.addLayer(2,1, "test_output");
     my_net.initializeNetWeights();
 
     //my_net.printNet();
