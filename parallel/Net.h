@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <pthread.h>
+#include <thread>
 
 #include "Layer.h"
 #include "DatasetParser.h"
@@ -18,20 +18,9 @@ struct LayerNode {
     LayerNode* next;
 };
 
-struct thread_args { 
-    int tid;
-    double ** mat1; 
-    int num_cols1;
-    double ** mat2;
-    int num_cols2;
-    int partitionSize;
-    int partitionStart;
-    double ** res;
-};
-
 class Net {
     public:
-        Net(double lr, int input_size, int numThreads);
+        Net(double lr, int input_size, int num_threads);
         ~Net();
         
         // actually useful functions
@@ -41,7 +30,7 @@ class Net {
         void performForwardProp(int tid);
         void setInput(double* inp, double label, int tid);
         void initializeNetWeights();
-        void updateWeights();
+        void updateWeights(int tid);
         void trainNet(int num_epochs);
         double calculateLoss();
 
@@ -50,7 +39,7 @@ class Net {
         void free_2D(double** arr);
 
         // parallel functions
-        void * pTrain(void * args);
+        void * pTrain(int tid);
         
         // Debug Functions
         void printNet();
@@ -70,7 +59,7 @@ class Net {
         double label;
         double* prediction;
         int num_threads;
-        pthread_t* threads;
+        std::thread * threads;
         DatasetParser* parser;
         Barrier* barrier;
         int num_right;

@@ -80,61 +80,52 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
     return res;*/
 }
 
-double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols) {
-    double** res = this->allocate_2D(num_cols, num_rows);
-
-    int new_num_threads = this->numThreads;
-    if(num_rows < this->numThreads) new_num_threads = num_rows;
+double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols, int tid, int num_threads, Barrier* barrier) {
+    if(tid == 0) {
+        this->res = this->allocate_2D(num_cols, num_rows);
+    }
+    
+    int new_num_threads = num_threads;
+    if(num_rows < num_threads) new_num_threads = num_rows;
     int partitionSize = num_rows / new_num_threads;
-    for(int i = 0; i < new_num_threads; i++) {
-        transpose_thread_args * threadData = (transpose_thread_args*)malloc(sizeof(transpose_thread_args));
-        if(i == numThreads - 1) {
-            threadData->partitionSize = num_rows - (i*partitionSize);
-            threadData->partitionStart = num_rows - threadData->partitionSize;
-        } else {
-            threadData->partitionSize = partitionSize;
-            threadData->partitionStart = i * partitionSize;
-        }
-       
-        threadData->tid = i;
-        threadData->mat = mat;
-        threadData->num_cols = num_cols;
-        threadData->res = res;
-
-        pthread_create(&(this->threads[i]), NULL, pTransposeMat, (void *)threadData);
+    int partitionStart = 0;
+    if(tid == new_num_threads - 1) {
+        partitionSize = num_rows - (tid*partitionSize);
+        partitionStart = num_rows - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
     }
 
-    for (int i = 0; i < new_num_threads; i++)  
-        pthread_join(this->threads[i], NULL);     
+    barrier->barrier_exec(num_threads);  
 
-    return res;
+    if(tid < new_num_threads) {
+        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+            for (int j = 0; j < num_cols; j++) {
+                this->res[j][i] = mat[i][j];
+            }
+        }
+    }
+        
+    return this->res;
 }
 
-void MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, double** result_mat) {
-    int new_num_threads = this->numThreads;
-    if(num_rows < this->numThreads) new_num_threads = num_rows;
+void MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, double** result_mat, int tid, int num_threads, Barrier* barrier) {
+    int new_num_threads = num_threads;
+    if(num_rows < num_threads) new_num_threads = num_rows;
     int partitionSize = num_rows / new_num_threads;
-    for(int i = 0; i < new_num_threads; i++) {
-        hadamard_thread_args * threadData = (hadamard_thread_args*)malloc(sizeof(hadamard_thread_args));
-        if(i == numThreads - 1) {
-            threadData->partitionSize = num_rows - (i*partitionSize);
-            threadData->partitionStart = num_rows - threadData->partitionSize;
-        } else {
-            threadData->partitionSize = partitionSize;
-            threadData->partitionStart = i * partitionSize;
-        }
-       
-        threadData->tid = i;
-        threadData->mat1 = mat1;
-        threadData->mat2 = mat2;
-        threadData->num_cols = num_cols;
-        threadData->res = result_mat;
-
-        pthread_create(&(this->threads[i]), NULL, pHadamardProd, (void *)threadData);
+    int partitionStart = 0;
+    if(tid == new_num_threads - 1) {
+        partitionSize = num_rows - (tid*partitionSize);
+        partitionStart = num_rows - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
     }
 
-    for (int i = 0; i < new_num_threads; i++)  
-        pthread_join(this->threads[i], NULL);     
+    for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+        for (int j = 0; j < num_cols; j++) {
+            result_mat[i][j] = mat1[i][j] * mat2[i][j];
+        }
+    }
 }
 
 double** MatrixCalculator::allocate_2D(int rows, int cols) {
