@@ -62,24 +62,24 @@ Layer::~Layer() {
 
 void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols) {
     // calculate dZ
-    double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols);
-    double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols);
+    // double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols);
+    // double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols);
 
-    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons);
-    mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ);
+    // double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons);
+    // mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ);
 
 }
 
 void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols) {
-    this->dZ[0][0] = this->A[0][0] - Y;
-    double** A_prev_transpose = mc.transposeMatrix(A_prev, A_prev_rows, A_prev_cols);
-    //this->free_2D(this->dW);
-    this->dW = mc.matrixTimesMatrix(this->dZ, this->dZ_rows, this->dZ_cols, A_prev_transpose, A_prev_cols, A_prev_rows);
-    //this->free_2D(this->dB);
-    this->dB = this->dZ;
+    // this->dZ[0][0] = this->A[0][0] - Y;
+    // double** A_prev_transpose = mc.transposeMatrix(A_prev, A_prev_rows, A_prev_cols);
+    // //this->free_2D(this->dW);
+    // this->dW = mc.matrixTimesMatrix(this->dZ, this->dZ_rows, this->dZ_cols, A_prev_transpose, A_prev_cols, A_prev_rows);
+    // //this->free_2D(this->dB);
+    // this->dB = this->dZ;
 
-    // deallocate A_prev_transpose because we made alloc'd a new array for it
-    //this->free_2D(A_prev_transpose);
+    // // deallocate A_prev_transpose because we made alloc'd a new array for it
+    // //this->free_2D(A_prev_transpose);
 }
 
 void Layer::forwardProp(double** input, int tid, Barrier* barrier) {

@@ -1,18 +1,14 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <iostream>
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <thread>
 
 #include "Net.h"
 
-Net::Net(double lr, int input_size, int numThreads) {
+Net::Net(double lr, int input_size, int num_threads) {
     this->lr = lr;
     this->input_size = input_size;
     // this->input = new double*[input_size];
@@ -26,8 +22,8 @@ Net::Net(double lr, int input_size, int numThreads) {
     this->num_right = 0;
     this->cost = 0;
     this->parser = new DatasetParser("../data/sonar.all-data", 0);
-    this->num_threads = numThreads;
-    this->threads = new pthread_t[numThreads];
+    this->num_threads = num_threads;
+    this->threads = new std::thread[num_threads];
     this->barrier = new Barrier();
 }
 
@@ -215,62 +211,51 @@ void Net::updateWeights() {
     }
 }
 
-void * Net::pTrain(void * data) {
-    thread_args * args = (thread_args*) data;
-    int num_observations = this->parser->getNumObservations();
-   
-    for (int j = 0; j < num_observations; j++) {
-        double* temp_input = this->parser->getInput(j);
-        int temp_output = this->parser->getOutput(j);
-        this->setInput(temp_input, temp_output, args->tid);
+void * Net::pTrain(int tid) {
+            int num_observations = this->parser->getNumObservations();
+            
+            for (int j = 0; j < num_observations; j++) {
+                double* temp_input = this->parser->getInput(j);
+                int temp_output = this->parser->getOutput(j);
+                this->setInput(temp_input, temp_output, tid);
+                printf("BB1 Tid: %d\n", tid);
+                this->barrier->barrier_exec(this->num_threads);
+                printf("AB1 Tid: %d\n", tid);
+                this->performForwardProp(tid);
 
-        this->barrier->barrier_exec(this->num_threads);
+                this->barrier->barrier_exec(this->num_threads);
 
-        this->performForwardProp(args->tid);
+                //this->performBackProp(tid);
 
-        this->barrier->barrier_exec(this->num_threads);
-
-        this->performBackProp(args->tid);
-
-        this->barrier->barrier_exec(this->num_threads);
-        this->updateWeights();
-        this->cost += calculateLoss();
-        // if (j % 5 == 0) {
-        //     printf("Example %d of epoch %d\n", j, i);
-        // }
-        //break;
-        
-        double pred = this->tail->curr->A[0][0];
-        pred = round(pred);
-        if (this->label == pred) {
-            this->num_right++;
+                //this->barrier->barrier_exec(this->num_threads);
+                this->updateWeights();
+                this->cost += this->calculateLoss();
+                // if (j % 5 == 0) {
+                //     printf("Example %d of epoch %d\n", j, i);
+                // }
+                //break;
+                
+                double pred = this->tail->curr->A[0][0];
+                pred = round(pred);
+                if (this->label == pred) {
+                    this->num_right++;
+                }
+            }
         }
-    }
-}
 
 void Net::trainNet(int num_epochs) {
+
     for (int i = 0; i < num_epochs; i++) {
         this->cost = 0;
         this->num_right = 0;
         int num_observations = this->parser->getNumObservations();
     
-        for(int i = 0; i < this->num_threads; i++) {
-            thread_args * threadData = (thread_args*)malloc(sizeof(thread_args));
-            /*if(i == numThreads - 1) {
-                threadData->partitionSize = num_observations - (i*partitionSize);
-                threadData->partitionStart = num_observations - threadData->partitionSize;
-            } else {
-                threadData->partitionSize = partitionSize;
-                threadData->partitionStart = i * partitionSize;
-            }*/
-        
-            threadData->tid = i;
-
-            pthread_create(&(this->threads[i]), NULL, this->pTrain, (void *)threadData);
+        for(int i = 0; i < this->num_threads; i++) {     
+            this->threads[i] = std::thread(&Net::pTrain, this, i);   
         }
 
         for (int i = 0; i < this->num_threads; i++) {
-            pthread_join(this->threads[i], NULL);     
+            this->threads[i].join();
         }
         
         this->cost /= -(double)num_observations;
