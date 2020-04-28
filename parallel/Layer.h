@@ -10,15 +10,10 @@
 #include <string>
 
 #include "MatrixCalculator.h"
+#include "Barrier.h"
 
 #ifndef LAYER_H
 #define LAYER_H
-
-typedef struct {
-  pthread_mutex_t countLock;
-  pthread_cond_t okToProceed;
-  int count;
-} barrier_t;
 
 class Layer {
     public:
@@ -28,7 +23,7 @@ class Layer {
         // actually useful functions
         // void backProp();
         void backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols);
-        void forwardProp(double** input, int tid, barrier_t barrier);
+        void forwardProp(double** input, int tid, Barrier* barrier);
         void lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols);
         void initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_cols, int dB_rows, int dB_cols);
         void initializeWeights();
@@ -45,10 +40,6 @@ class Layer {
 
         double** sigmoid_derivative(double* input_z, int input_length);
         double sigmoid(double input);
-
-        // parallel functions
-        void barrier_init(barrier_t *b);
-        void barrier_exec(barrier_t *b, int numThreads);
 
         // debug functions
         void initializeTestWeights();

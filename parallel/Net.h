@@ -2,16 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <string>
 #include <pthread.h>
 
 #include "Layer.h"
 #include "DatasetParser.h"
+#include "Barrier.h"
 
 #ifndef NET_H
 #define NET_H
@@ -33,12 +29,6 @@ struct thread_args {
     double ** res;
 };
 
-typedef struct {
-  pthread_mutex_t countLock;
-  pthread_cond_t okToProceed;
-  int count;
-} barrier_t;
-
 class Net {
     public:
         Net(double lr, int input_size, int numThreads);
@@ -47,7 +37,7 @@ class Net {
         // actually useful functions
         void addLayer(int num_input, int num_neurons, std::string name);
         void initializeGradients();
-        void performBackProp();
+        void performBackProp(int tid);
         void performForwardProp(int tid);
         void setInput(double* inp, double label, int tid);
         void initializeNetWeights();
@@ -60,8 +50,6 @@ class Net {
         void free_2D(double** arr);
 
         // parallel functions
-        void barrier_init(barrier_t *b);
-        void barrier_exec(barrier_t *b, int numThreads);
         void * pTrain(void * args);
         
         // Debug Functions
@@ -84,7 +72,7 @@ class Net {
         int num_threads;
         pthread_t* threads;
         DatasetParser* parser;
-        barrier_t barrier;
+        Barrier* barrier;
         int num_right;
         double cost;
         

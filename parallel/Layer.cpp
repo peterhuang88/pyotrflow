@@ -7,7 +7,6 @@
 #include <pthread.h>
 
 #include "Layer.h"
-#include "Net.h"
 
 MatrixCalculator mc(4);
 
@@ -83,12 +82,12 @@ void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_
     //this->free_2D(A_prev_transpose);
 }
 
-void Layer::forwardProp(double** input, int tid, barrier_t barrier) {
+void Layer::forwardProp(double** input, int tid, Barrier* barrier) {
     // perform wTx 
     
     this->Z = mc.matrixTimesMatrix(this->W, num_neurons, num_input, input, num_input, 1, tid, this->num_threads, barrier);
 
-    this->barrier_exec(&barrier, this->num_threads);
+    barrier->barrier_exec(this->num_threads);
     // mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
     
     // add bias to each z
@@ -109,19 +108,6 @@ void Layer::forwardProp(double** input, int tid, barrier_t barrier) {
         for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
             // this->Z[i] += this->b[i];
             this->Z[i][0] += this->b[i];
-        }
-    }
-
-    this->barrier_exec(&barrier, this->num_threads);
-
-    // calculate activations
-    // TODO: combine this loop into above loop?
-    if(tid < new_num_threads) {
-        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
-            // this->A[i] = 1.0 / (1.0 + exp(-this->Z[i]));
-
-            // TODO: comment out, this is only for testing
-            // this->A[i][0] = this->Z[i];
             this->A[i][0] = this->sigmoid(Z[i][0]);
         }
     }
@@ -236,26 +222,6 @@ double** Layer::sigmoid_derivative(double* input_z, int input_length) {
 
 double Layer::sigmoid(double input) {
     return 1.0 / (1.0 + exp(-input));
-}
-
-/***************** PARALLEL FUNCTIONS ******************************/
-
-void Layer::barrier_init(barrier_t *b) {
-  b->count = 0;
-  pthread_mutex_init(&(b->countLock), NULL);
-  pthread_cond_init(&(b->okToProceed), NULL);
-}
-
-void Layer::barrier_exec(barrier_t *b, int numThreads) {
-  pthread_mutex_lock(&(b->countLock));
-  b->count++;
-  if(b->count == numThreads) {
-    b->count = 0;
-    pthread_cond_broadcast(&(b->okToProceed));
-  } else {
-    while(pthread_cond_wait(&(b->okToProceed), &(b->countLock)) != 0);
-  }
-  pthread_mutex_unlock(&(b->countLock));
 }
 
 /***************** DEBUG FUNCTIONS *********************************/

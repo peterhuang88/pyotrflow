@@ -28,7 +28,7 @@ Net::Net(double lr, int input_size, int numThreads) {
     this->parser = new DatasetParser("../data/sonar.all-data", 0);
     this->num_threads = numThreads;
     this->threads = new pthread_t[numThreads];
-    barrier_init(&(this->barrier));
+    this->barrier = new Barrier();
 }
 
 Net::~Net() {
@@ -99,7 +99,7 @@ void Net::initializeGradients() {
     temp->curr->initializeGradients(next_w_cols, next_dz_cols, next_w_cols, this->input_size, next_w_cols, next_dz_cols);
 }
 
-void Net::performBackProp() {
+void Net::performBackProp(int tid) {
     // do final layer first
     LayerNode* temp = this->tail;
     double** A_prev = temp->prev->curr->getActivations();
@@ -169,8 +169,8 @@ void Net::performForwardProp(int tid) {
         // forward prop for given layer
         temp->curr->forwardProp(A_prev, tid, this->barrier);
 
-        this->barrier_exec(&barrier, this->num_threads);
-        
+        this->barrier->barrier_exec(this->num_threads);
+
         A_prev = temp->curr->getActivations();
         temp = temp->next;
     }
@@ -224,10 +224,15 @@ void * Net::pTrain(void * data) {
         int temp_output = this->parser->getOutput(j);
         this->setInput(temp_input, temp_output, args->tid);
 
-        this->barrier_exec(&(this->barrier), this->num_threads);
+        this->barrier->barrier_exec(this->num_threads);
 
         this->performForwardProp(args->tid);
-        this->performBackProp();
+
+        this->barrier->barrier_exec(this->num_threads);
+
+        this->performBackProp(args->tid);
+
+        this->barrier->barrier_exec(this->num_threads);
         this->updateWeights();
         this->cost += calculateLoss();
         // if (j % 5 == 0) {
@@ -307,27 +312,6 @@ void Net::free_2D(double** arr) {
     free(*arr);
     free(arr);
 }
-
-/**************** PARALLEL FUNCTIONS *******************************/
-void Net::barrier_init(barrier_t *b) {
-  b->count = 0;
-  pthread_mutex_init(&(b->countLock), NULL);
-  pthread_cond_init(&(b->okToProceed), NULL);
-}
-
-void Net::barrier_exec(barrier_t *b, int numThreads) {
-  pthread_mutex_lock(&(b->countLock));
-  b->count++;
-  if(b->count == numThreads) {
-    b->count = 0;
-    pthread_cond_broadcast(&(b->okToProceed));
-  } else {
-    while(pthread_cond_wait(&(b->okToProceed), &(b->countLock)) != 0);
-  }
-  pthread_mutex_unlock(&(b->countLock));
-}
-
-
 
 /***************** DEBUG FUNCTIONS *********************************/
 
