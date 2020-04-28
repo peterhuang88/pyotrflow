@@ -103,7 +103,6 @@ void Net::performBackProp(int tid) {
     int A_prev_cols = temp->curr->num_neurons;
 
     temp->curr->lastLayerBackProp(this->label, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
-
     //TODO: remove barrier?
     this->barrier->barrier_exec(this->num_threads);
     // std::cout << temp->curr->name << " doing backprop\n";
@@ -135,6 +134,8 @@ void Net::performBackProp(int tid) {
         A_prev_cols = temp->curr->num_neurons;
 
         temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
+        //printf("Made it here\n");
+        
         temp = temp->prev;
         this->barrier->barrier_exec(this->num_threads);
     }
@@ -232,6 +233,8 @@ void * Net::pTrain(int tid) {
                 this->barrier->barrier_exec(this->num_threads);
 
                 this->updateWeights(tid);
+
+                this->barrier->barrier_exec(this->num_threads);
 
                 if(tid == 0) {
                     this->cost += this->calculateLoss();

@@ -36,7 +36,8 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
             printf("Matrix times matrix dimension error\n");
             exit(1);
         }
-
+        
+        if(this->res != NULL) this->free_2D(this->res);
         this->res = this->allocate_2D(num_rows1, num_cols2);
     }
 
@@ -82,6 +83,7 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
 
 double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols, int tid, int num_threads, Barrier* barrier) {
     if(tid == 0) {
+        if(this->res != NULL) this->free_2D(this->res);
         this->res = this->allocate_2D(num_cols, num_rows);
     }
     
@@ -106,10 +108,43 @@ double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_c
         }
     }
         
+    barrier->barrier_exec(num_threads);
+    return this->res;
+}
+
+double** MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, int tid, int num_threads, Barrier* barrier) {
+    
+    if(tid == 0) {
+        if(this->res != NULL) this->free_2D(this->res);
+        this->res = this->allocate_2D(num_rows, num_cols);
+    }
+
+    int new_num_threads = num_threads;
+    if(num_rows < num_threads) new_num_threads = num_rows;
+    int partitionSize = num_rows / new_num_threads;
+    int partitionStart = 0;
+    if(tid == new_num_threads - 1) {
+        partitionSize = num_rows - (tid*partitionSize);
+        partitionStart = num_rows - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
+    }
+
+    barrier->barrier_exec(num_threads);
+    if(tid < new_num_threads) {
+        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+            for (int j = 0; j < num_cols; j++) {
+                this->res[i][j] = mat1[i][j] * mat2[i][j];
+            }
+        }
+    } 
+
+    barrier->barrier_exec(num_threads);
     return this->res;
 }
 
 void MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, double** result_mat, int tid, int num_threads, Barrier* barrier) {
+    // Causing segfaults, currently using overloaded function
     int new_num_threads = num_threads;
     if(num_rows < num_threads) new_num_threads = num_rows;
     int partitionSize = num_rows / new_num_threads;
