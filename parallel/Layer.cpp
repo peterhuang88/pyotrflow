@@ -159,26 +159,44 @@ void Layer::initializeWeights() {
 }
 
 void Layer::updateWeights(double lr, int tid, Barrier* barrier) {
-    int new_num_threads = this->num_threads;
-    if(this->num_neurons < this->num_threads) new_num_threads = this->num_neurons;
-    int partitionSize = this->num_neurons / new_num_threads;
-    int partitionStart = 0;
-    if(tid == new_num_threads - 1) {
-        partitionSize = this->num_neurons - (tid*partitionSize);
-        partitionStart = this->num_neurons - partitionSize;
+    int new_num_threads1 = this->num_threads;
+    int new_num_threads2 = this->num_threads;
+    if(this->num_neurons < this->num_threads) new_num_threads1 = this->num_neurons;
+    if(this->num_neurons < this->num_threads) new_num_threads2 = this->dB_rows;
+
+    int partitionSize1 = this->num_neurons / new_num_threads1;
+    int partitionStart1 = 0;
+    int partitionSize2 = this->dB_rows / new_num_threads2;
+    int partitionStart2 = 0;
+
+    if(tid == new_num_threads1 - 1) {
+        partitionSize1 = this->num_neurons - (tid*partitionSize1);
+        partitionStart1 = this->num_neurons - partitionSize1;
     } else {
-        partitionStart = tid * partitionSize;
+        partitionStart1 = tid * partitionSize1;
     }
 
-    for (int i = 0; i < this->num_neurons; i++) {
-        for (int j = 0; j < this->num_input; j++) {
-            this->W[i][j] -= lr * this->dW[i][j];
+    if(tid == new_num_threads2 - 1) {
+        partitionSize2 = this->dB_rows - (tid*partitionSize2);
+        partitionStart2 = this->dB_rows - partitionSize2;
+    } else {
+        partitionStart2 = tid * partitionSize2;
+    }
+
+    if(tid < new_num_threads1) {
+        for (int i = partitionSize1; i < partitionSize1 + partitionStart1; i++) {
+            for (int j = 0; j < this->num_input; j++) {
+                this->W[i][j] -= lr * this->dW[i][j];
+            }
         }
     }
 
-    for (int i = 0; i < dB_rows; i++) {
-        this->b[i] -= lr * this->dB[i][0];
+    if(tid < new_num_threads2) {
+        for (int i = partitionSize2; i < partitionSize2 + partitionStart2; i++) {
+            this->b[i] -= lr * this->dB[i][0];
+        }
     }
+
 }
 
 

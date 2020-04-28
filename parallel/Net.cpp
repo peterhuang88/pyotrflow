@@ -207,6 +207,8 @@ void Net::updateWeights(int tid) {
     
     while (temp != NULL) {
         temp->curr->updateWeights(this->lr, tid, barrier);
+        //TODO: remove barrier?
+        this->barrier->barrier_exec(this->num_threads);
         temp = temp->next;     
     }
 }
@@ -230,17 +232,22 @@ void * Net::pTrain(int tid) {
                 this->barrier->barrier_exec(this->num_threads);
 
                 this->updateWeights(tid);
-                this->cost += this->calculateLoss();
-                // if (j % 5 == 0) {
-                //     printf("Example %d of epoch %d\n", j, i);
-                // }
-                //break;
-                
-                double pred = this->tail->curr->A[0][0];
-                pred = round(pred);
-                if (this->label == pred) {
-                    this->num_right++;
+
+                if(tid == 0) {
+                    this->cost += this->calculateLoss();
+                    // if (j % 5 == 0) {
+                    //     printf("Example %d of epoch %d\n", j, i);
+                    // }
+                    //break;
+                    
+                    double pred = this->tail->curr->A[0][0];
+                    pred = round(pred);
+                    if (this->label == pred) {
+                        this->num_right++;
+                    }
                 }
+                
+                this->barrier->barrier_exec(this->num_threads);
             }
         }
 
@@ -254,11 +261,11 @@ void Net::trainNet(int num_epochs) {
         for(int i = 0; i < this->num_threads; i++) {     
             this->threads[i] = std::thread(&Net::pTrain, this, i);   
         }
-
+        
         for (int i = 0; i < this->num_threads; i++) {
             this->threads[i].join();
         }
-        
+        printf("Threads are done executing.\n");
         this->cost /= -(double)num_observations;
         double acc = this->num_right / (double)num_observations;
         printf("Epoch %d cost: %lf\n", i, cost);
