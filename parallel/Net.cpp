@@ -102,9 +102,10 @@ void Net::performBackProp(int tid) {
     int A_prev_rows = temp->curr->num_input;
     int A_prev_cols = temp->curr->num_neurons;
 
-    temp->curr->lastLayerBackProp(this->label, A_prev, A_prev_rows, A_prev_cols);
+    temp->curr->lastLayerBackProp(this->label, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
 
-
+    //TODO: remove barrier?
+    this->barrier->barrier_exec(this->num_threads);
     // std::cout << temp->curr->name << " doing backprop\n";
     LayerNode* temp_next;//  = temp->next;
     LayerNode* temp_prev;
@@ -133,9 +134,9 @@ void Net::performBackProp(int tid) {
         A_prev_rows = temp->curr->num_input;
         A_prev_cols = temp->curr->num_neurons;
 
-        temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols);
-
+        temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
         temp = temp->prev;
+        this->barrier->barrier_exec(this->num_threads);
     }
 
     temp_next = temp->next;
@@ -152,8 +153,7 @@ void Net::performBackProp(int tid) {
     A_prev_rows = this->input_size;
     A_prev_cols = 1;
 
-    temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols);
-
+    temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
 }
 
 void Net::performForwardProp(int tid) {
@@ -202,11 +202,11 @@ void Net::initializeNetWeights() {
     }
 }
 
-void Net::updateWeights() {
+void Net::updateWeights(int tid) {
     LayerNode* temp = this->head;
     
     while (temp != NULL) {
-        temp->curr->updateWeights(this->lr);
+        temp->curr->updateWeights(this->lr, tid, barrier);
         temp = temp->next;     
     }
 }
@@ -218,17 +218,18 @@ void * Net::pTrain(int tid) {
                 double* temp_input = this->parser->getInput(j);
                 int temp_output = this->parser->getOutput(j);
                 this->setInput(temp_input, temp_output, tid);
-                printf("BB1 Tid: %d\n", tid);
+    
                 this->barrier->barrier_exec(this->num_threads);
-                printf("AB1 Tid: %d\n", tid);
+ 
                 this->performForwardProp(tid);
 
                 this->barrier->barrier_exec(this->num_threads);
 
-                //this->performBackProp(tid);
+                this->performBackProp(tid);
 
-                //this->barrier->barrier_exec(this->num_threads);
-                this->updateWeights();
+                this->barrier->barrier_exec(this->num_threads);
+
+                this->updateWeights(tid);
                 this->cost += this->calculateLoss();
                 // if (j % 5 == 0) {
                 //     printf("Example %d of epoch %d\n", j, i);

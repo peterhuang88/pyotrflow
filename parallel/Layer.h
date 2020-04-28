@@ -22,12 +22,12 @@ class Layer {
 
         // actually useful functions
         // void backProp();
-        void backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols);
+        void backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier);
         void forwardProp(double** input, int tid, Barrier* barrier);
-        void lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols);
+        void lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier);
         void initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_cols, int dB_rows, int dB_cols);
         void initializeWeights();
-        void updateWeights(double lr);
+        void updateWeights(double lr, int tid, Barrier* barrier);
 
         // random helper functions
         double** getActivations();

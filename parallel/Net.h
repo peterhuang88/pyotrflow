@@ -30,7 +30,7 @@ class Net {
         void performForwardProp(int tid);
         void setInput(double* inp, double label, int tid);
         void initializeNetWeights();
-        void updateWeights();
+        void updateWeights(int tid);
         void trainNet(int num_epochs);
         double calculateLoss();
 
