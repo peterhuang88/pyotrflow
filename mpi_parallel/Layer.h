@@ -27,6 +27,7 @@ class Layer {
         void initializeGradients(int dZ_rows, int dZ_cols, int dW_rows, int dW_cols, int dB_rows, int dB_cols);
         void initializeWeights();
         void updateWeights(double lr);
+        void syncWeights(int world_rank, int world_size);
 
         // random helper functions
         double** getActivations();
@@ -62,6 +63,7 @@ class Layer {
         int num_neurons;
         int num_input;
         double** W; // this is actually W_t
+        double* W_1d; 
         std::string name;
         double** A; // A = activation_func(Z)
         double** Z;

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <mpi.h>
 
 
 #include "Layer.h"
@@ -25,6 +26,7 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name) {
     //     this->W[i] = new double[num_input];
     // }
     this->W = this->allocate_2D(num_neurons, num_input);
+    this->W_1d = this->W[0];
 
     // this->Z = new double[num_neurons];
     this->Z = this->allocate_2D(num_neurons, 1);
@@ -154,7 +156,21 @@ void Layer::updateWeights(double lr) {
         this->b[i] -= lr * this->dB[i][0];
     }
 }
+ 
+void Layer::syncWeights(int world_rank, int world_size) {
+    double** memes = this->allocate_2D(this->num_neurons, this->num_input);
 
+    int num_elements = this->num_input * this->num_neurons;
+    MPI_Allreduce(&(this->W[0][0]), &(memes[0][0]), num_elements, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    for (int i = 0; i < this->num_neurons; i++) {
+        for (int j = 0; j < this->num_input; j++) {
+            memes[i][j] /= world_size;
+        }
+    }
+    this->free_2D(this->W);
+    this->W = memes;
+}
 
 /***************** HELPER FUNCTIONS ********************************/
 
