@@ -36,7 +36,7 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
             exit(1);
         }
         
-        if(this->res != NULL) this->free_2D(this->res);
+        //if(this->res != NULL) this->free_2D(this->res);
         this->res = this->allocate_2D(num_rows1, num_cols2);
     }
 
@@ -82,7 +82,7 @@ double** MatrixCalculator::matrixTimesMatrix(double** mat1, int num_rows1, int n
 
 double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_cols, int tid, int num_threads, Barrier* barrier) {
     if(tid == 0) {
-        if(this->res != NULL) this->free_2D(this->res);
+        //if(this->res != NULL) this->free_2D(this->res);
         this->res = this->allocate_2D(num_cols, num_rows);
     }
     
@@ -114,7 +114,7 @@ double** MatrixCalculator::transposeMatrix(double** mat, int num_rows, int num_c
 double** MatrixCalculator::hadamardProduct(double** mat1, double** mat2, int num_rows, int num_cols, int tid, int num_threads, Barrier* barrier) {
     
     if(tid == 0) {
-        if(this->res != NULL) this->free_2D(this->res);
+        //if(this->res != NULL) this->free_2D(this->res);
         this->res = this->allocate_2D(num_rows, num_cols);
     }
 

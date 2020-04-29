@@ -38,7 +38,7 @@ class Layer {
         double** allocate_2D(int rows, int cols);
         void free_2D(double** arr);
 
-        double** sigmoid_derivative(double* input_z, int input_length, int tid, Barrier* barrier);
+        double** sigmoid_derivative(double** input_z, int input_length, int tid, Barrier* barrier);
         double sigmoid(double input);
 
         // debug functions

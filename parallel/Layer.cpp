@@ -61,11 +61,10 @@ Layer::~Layer() {
 void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier) {
     // calculate dZ
     double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols, tid, this->num_threads, barrier);
-     
     barrier->barrier_exec(this->num_threads);
     double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols, tid, this->num_threads, barrier);
-    printf("this->Z[0]: %p\n", this->Z[0]);
-    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons, tid, barrier);
+
+    double** deriv = this->sigmoid_derivative(this->Z, this->num_neurons, tid, barrier);
     //printf("sigmoid done! %d\n", tid);
     
     barrier->barrier_exec(this->num_threads);
@@ -76,6 +75,7 @@ void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double**
 
 void Layer::lastLayerBackProp(double Y, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier) {
     this->dZ[0][0] = this->A[0][0] - Y;
+    //printf("lLBackProp Z[0][0] = %lf\n", this->Z[0][0]);
     double** A_prev_transpose = mc.transposeMatrix(A_prev, A_prev_rows, A_prev_cols, tid, this->num_threads, barrier);
     //this->free_2D(this->dW);
     barrier->barrier_exec(this->num_threads);
@@ -94,6 +94,10 @@ void Layer::forwardProp(double** input, int tid, Barrier* barrier) {
     this->Z = mc.matrixTimesMatrix(this->W, num_neurons, num_input, input, num_input, 1, tid, this->num_threads, barrier);
 
     barrier->barrier_exec(this->num_threads);
+    /*if(tid == 0) {
+        printf("Here: this->Z[0][0]: %lf\n", this->Z[0][0]);
+    }*/
+    
     // mc.matrixTimesVector(this->W, num_neurons, num_input, input, num_neurons, this->Z);
     
     // add bias to each z
@@ -113,6 +117,7 @@ void Layer::forwardProp(double** input, int tid, Barrier* barrier) {
     if(tid < new_num_threads) {
         for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
             // this->Z[i] += this->b[i];
+            
             this->Z[i][0] += this->b[i];
             this->A[i][0] = this->sigmoid(Z[i][0]);
         }
@@ -244,10 +249,10 @@ void Layer::free_2D(double** arr) {
     free(arr);
 }
 
-double** Layer::sigmoid_derivative(double* input_z, int input_length, int tid, Barrier* barrier) {
+double** Layer::sigmoid_derivative(double** input_z, int input_length, int tid, Barrier* barrier) {
     
     if(tid == 0) {
-        if(this->sigmoid_deriv_ret != NULL) this->free_2D(this->sigmoid_deriv_ret);
+        //if(this->sigmoid_deriv_ret != NULL) this->free_2D(this->sigmoid_deriv_ret);
         this->sigmoid_deriv_ret = this->allocate_2D(input_length, 1);
     }
     
@@ -263,12 +268,12 @@ double** Layer::sigmoid_derivative(double* input_z, int input_length, int tid, B
         partitionStart = tid * partitionSize;
     }
 
-    
+    //printf("partitioning done! %d %lf\n", tid, input_z[0][0]);
     barrier->barrier_exec(this->num_threads);
 
     if(tid < new_num_threads) {
         for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
-            double sig = this->sigmoid(input_z[i]);
+            double sig = this->sigmoid(input_z[i][0]);
             this->sigmoid_deriv_ret[i][0] = sig * (1 - sig);
         }
     }

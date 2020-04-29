@@ -134,10 +134,8 @@ void Net::performBackProp(int tid) {
         A_prev_rows = temp->curr->num_input;
         A_prev_cols = temp->curr->num_neurons;
 
-        if(tid == 0) printf("Made it here\n");
         temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
-        
-        
+           
         temp = temp->prev;
         this->barrier->barrier_exec(this->num_threads);
     }
@@ -156,7 +154,6 @@ void Net::performBackProp(int tid) {
     A_prev_rows = this->input_size;
     A_prev_cols = 1;
 
-    if(tid == 0) printf("First layer backprop\n");
     temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
 }
 
@@ -217,8 +214,12 @@ void Net::updateWeights(int tid) {
     }
 }
 
-void * Net::pTrain(int tid) {
-            int num_observations = this->parser->getNumObservations();
+void * Net::pTrain(int tid, int num_epochs) {
+
+      for (int i = 0; i < num_epochs; i++) {
+        this->cost = 0;
+        this->num_right = 0;
+        int num_observations = this->parser->getNumObservations();
             
             for (int j = 0; j < num_observations; j++) {
                 double* temp_input = this->parser->getInput(j);
@@ -250,7 +251,9 @@ void * Net::pTrain(int tid) {
                     //break;
                     
                     double pred = this->tail->curr->A[0][0];
+                    //printf("pred: %lf\n", pred);
                     pred = round(pred);
+                    //printf("rpred: %lf\n", pred);
                     //printf("pred: %lf\n", pred);
                     if (this->label == pred) {
                         this->num_right++;
@@ -259,30 +262,29 @@ void * Net::pTrain(int tid) {
                 
                 this->barrier->barrier_exec(this->num_threads);
             }
+
+            if(tid == 0) {
+                printf("Threads are done executing.\n");
+                this->cost /= -(double)num_observations;
+                double acc = this->num_right / (double)num_observations;
+                printf("Epoch %d cost: %lf\n", i, cost);
+                // printf("Epoch %d accuracy: %d\n", i, num_right);
+                printf("Epoch %d accuracy: %lf\n", i, acc);
+                //break;
+            }
+                
+            this->barrier->barrier_exec(this->num_threads);
         }
+}
 
 void Net::trainNet(int num_epochs) {
-
-    for (int i = 0; i < num_epochs; i++) {
-        this->cost = 0;
-        this->num_right = 0;
-        int num_observations = this->parser->getNumObservations();
-    
         for(int i = 0; i < this->num_threads; i++) {     
-            this->threads[i] = std::thread(&Net::pTrain, this, i);   
+            this->threads[i] = std::thread(&Net::pTrain, this, i, num_epochs);   
         }
         
         for (int i = 0; i < this->num_threads; i++) {
             this->threads[i].join();
-        }
-        printf("Threads are done executing.\n");
-        this->cost /= -(double)num_observations;
-        double acc = this->num_right / (double)num_observations;
-        printf("Epoch %d cost: %lf\n", i, cost);
-        // printf("Epoch %d accuracy: %d\n", i, num_right);
-        printf("Epoch %d accuracy: %lf\n", i, acc);
-        //break;
-    }
+        }    
 }
 
 double Net::calculateLoss() {

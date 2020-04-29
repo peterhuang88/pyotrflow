@@ -39,7 +39,7 @@ class Net {
         void free_2D(double** arr);
 
         // parallel functions
-        void * pTrain(int tid);
+        void * pTrain(int tid, int num_epochs);
         
         // Debug Functions
         void printNet();
