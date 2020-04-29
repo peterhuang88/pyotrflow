@@ -8,8 +8,6 @@
 
 #include "Layer.h"
 
-MatrixCalculator mc(4);
-
 /**
 * num_neurons = number of neurons in current layer
 * num_input = number of inputs from previous layer e.g. number of neurons in previous layer
@@ -40,7 +38,7 @@ Layer::Layer(int num_input, int num_neurons, int marker, std::string name, int n
     
     this->b = new double[num_neurons];
     this->num_threads = num_threads;
-
+    this->sigmoid_deriv_ret = NULL;
     // TODO: THIS NEEDS TO CHANGE
     // this->gradients = new double[num_neurons];
     // this->initializeTestWeights();
@@ -63,12 +61,16 @@ Layer::~Layer() {
 void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier) {
     // calculate dZ
     double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols, tid, this->num_threads, barrier);
+     
     barrier->barrier_exec(this->num_threads);
     double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols, tid, this->num_threads, barrier);
-
-    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons);
+    printf("this->Z[0]: %p\n", this->Z[0]);
+    double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons, tid, barrier);
+    //printf("sigmoid done! %d\n", tid);
+    
     barrier->barrier_exec(this->num_threads);
-    mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, this->dZ, tid, this->num_threads, barrier);
+   
+    this->dZ = mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, tid, this->num_threads, barrier);
 
 }
 
@@ -159,26 +161,44 @@ void Layer::initializeWeights() {
 }
 
 void Layer::updateWeights(double lr, int tid, Barrier* barrier) {
-    int new_num_threads = this->num_threads;
-    if(this->num_neurons < this->num_threads) new_num_threads = this->num_neurons;
-    int partitionSize = this->num_neurons / new_num_threads;
-    int partitionStart = 0;
-    if(tid == new_num_threads - 1) {
-        partitionSize = this->num_neurons - (tid*partitionSize);
-        partitionStart = this->num_neurons - partitionSize;
+    int new_num_threads1 = this->num_threads;
+    int new_num_threads2 = this->num_threads;
+    if(this->num_neurons < this->num_threads) new_num_threads1 = this->num_neurons;
+    if(this->num_neurons < this->num_threads) new_num_threads2 = this->dB_rows;
+
+    int partitionSize1 = this->num_neurons / new_num_threads1;
+    int partitionStart1 = 0;
+    int partitionSize2 = this->dB_rows / new_num_threads2;
+    int partitionStart2 = 0;
+
+    if(tid == new_num_threads1 - 1) {
+        partitionSize1 = this->num_neurons - (tid*partitionSize1);
+        partitionStart1 = this->num_neurons - partitionSize1;
     } else {
-        partitionStart = tid * partitionSize;
+        partitionStart1 = tid * partitionSize1;
     }
 
-    for (int i = 0; i < this->num_neurons; i++) {
-        for (int j = 0; j < this->num_input; j++) {
-            this->W[i][j] -= lr * this->dW[i][j];
+    if(tid == new_num_threads2 - 1) {
+        partitionSize2 = this->dB_rows - (tid*partitionSize2);
+        partitionStart2 = this->dB_rows - partitionSize2;
+    } else {
+        partitionStart2 = tid * partitionSize2;
+    }
+
+    if(tid < new_num_threads1) {
+        for (int i = partitionSize1; i < partitionSize1 + partitionStart1; i++) {
+            for (int j = 0; j < this->num_input; j++) {
+                this->W[i][j] -= lr * this->dW[i][j];
+            }
         }
     }
 
-    for (int i = 0; i < dB_rows; i++) {
-        this->b[i] -= lr * this->dB[i][0];
+    if(tid < new_num_threads2) {
+        for (int i = partitionSize2; i < partitionSize2 + partitionStart2; i++) {
+            this->b[i] -= lr * this->dB[i][0];
+        }
     }
+
 }
 
 
@@ -224,15 +244,37 @@ void Layer::free_2D(double** arr) {
     free(arr);
 }
 
-double** Layer::sigmoid_derivative(double* input_z, int input_length) {
-    double** ret = this->allocate_2D(input_length, 1);
+double** Layer::sigmoid_derivative(double* input_z, int input_length, int tid, Barrier* barrier) {
+    
+    if(tid == 0) {
+        if(this->sigmoid_deriv_ret != NULL) this->free_2D(this->sigmoid_deriv_ret);
+        this->sigmoid_deriv_ret = this->allocate_2D(input_length, 1);
+    }
+    
 
-    for (int i = 0; i < input_length; i++) {
-        double sig = this->sigmoid(input_z[i]);
-        ret[i][0] = sig * (1 - sig);
+    int new_num_threads = this->num_threads;
+    if(input_length < this->num_threads) new_num_threads = input_length;
+    int partitionSize = input_length / new_num_threads;
+    int partitionStart = 0;
+    if(tid == new_num_threads - 1) {
+        partitionSize = input_length - (tid*partitionSize);
+        partitionStart = input_length - partitionSize;
+    } else {
+        partitionStart = tid * partitionSize;
     }
 
-    return ret; 
+    
+    barrier->barrier_exec(this->num_threads);
+
+    if(tid < new_num_threads) {
+        for (int i = partitionStart; i < partitionStart + partitionSize; i++) {
+            double sig = this->sigmoid(input_z[i]);
+            this->sigmoid_deriv_ret[i][0] = sig * (1 - sig);
+        }
+    }
+    
+    barrier->barrier_exec(this->num_threads);
+    return this->sigmoid_deriv_ret; 
 }
 
 double Layer::sigmoid(double input) {

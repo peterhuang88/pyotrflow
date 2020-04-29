@@ -38,7 +38,7 @@ class Layer {
         double** allocate_2D(int rows, int cols);
         void free_2D(double** arr);
 
-        double** sigmoid_derivative(double* input_z, int input_length);
+        double** sigmoid_derivative(double* input_z, int input_length, int tid, Barrier* barrier);
         double sigmoid(double input);
 
         // debug functions
@@ -66,12 +66,13 @@ class Layer {
         std::string name;
         double** A; // A = activation_func(Z)
         double** Z;
+        double** sigmoid_deriv_ret;
 
     private:
         
          
         int marker; // 0 = nothing special, 1 = head, 2 = tail
-        //MatrixCalculator mc;
+        MatrixCalculator mc;
 
         
         double* b; // bias
