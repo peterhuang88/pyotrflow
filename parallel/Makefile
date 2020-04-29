@@ -1,5 +1,5 @@
-CC := g++
-CFLAGS := -Wall -g
+CXX := g++ -fPIC
+CXXFLAGS := -Wall -std=c++11 -pthread -g
 TARGET := neuralnet
 
 # $(wildcard *.cpp /xxx/xxx/*.cpp): get all .cpp files from the current directory and dir "/xxx/xxx/"
@@ -9,9 +9,9 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) -g -o $@ $^
+	$(CXX) -g -pthread -o $@ $^
 objects/%.o: %.cpp
-	$(CC) $(CFLAGS) -g -c $<
+	$(CXX) $(CXXFLAGS) -g -c $<
 clean:
 	rm -rf $(TARGET) *.o
 	
