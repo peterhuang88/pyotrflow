@@ -66,13 +66,13 @@ class Layer {
         std::string name;
         double** A; // A = activation_func(Z)
         double** Z;
-        double ** sigmoid_deriv_ret;
+        double** sigmoid_deriv_ret;
 
     private:
         
          
         int marker; // 0 = nothing special, 1 = head, 2 = tail
-        //MatrixCalculator mc;
+        MatrixCalculator mc;
 
         
         double* b; // bias

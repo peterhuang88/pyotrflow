@@ -15,28 +15,9 @@
 #ifndef MATRIXCALCULATOR_H
 #define MATRIXCALCULATOR_H
 
-struct transpose_thread_args {
-    int tid;
-    double ** mat;
-    int num_cols;
-    int partitionSize;
-    int partitionStart;
-    double **res;
-};
-
-struct hadamard_thread_args {
-    int tid;
-    double ** mat1;
-    double ** mat2;
-    int num_cols;
-    int partitionSize;
-    int partitionStart;
-    double **res;
-};
-
 class MatrixCalculator {
     public:
-        MatrixCalculator(int numThreads);
+        MatrixCalculator();
 
         // actually useful functions
         void matrixTimesVector(double** mat, int num_rows, int num_cols, double** vec, int vec_size, double** result_vec, int tid, int num_threads, Barrier* barrier);
@@ -50,9 +31,6 @@ class MatrixCalculator {
         void free_2D(double** arr);
 
         // random helper functions
-
-        int numThreads;
-        pthread_t * threads;
         double** res;
 };
 

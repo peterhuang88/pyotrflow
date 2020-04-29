@@ -101,7 +101,7 @@ void Net::performBackProp(int tid) {
     double** A_prev = temp->prev->curr->getActivations();
     int A_prev_rows = temp->curr->num_input;
     int A_prev_cols = temp->curr->num_neurons;
-
+    //if(tid == 0) printf("Last layer backprop\n");
     temp->curr->lastLayerBackProp(this->label, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
     //TODO: remove barrier?
     this->barrier->barrier_exec(this->num_threads);
@@ -116,6 +116,7 @@ void Net::performBackProp(int tid) {
     int dZ_next_cols;
     // now handle everything up until first layer
     temp = temp->prev;
+    //if(tid == 0) printf("Main backprop\n");
     while (temp->prev != NULL) {
         
         temp_next = temp->next;
@@ -133,8 +134,9 @@ void Net::performBackProp(int tid) {
         A_prev_rows = temp->curr->num_input;
         A_prev_cols = temp->curr->num_neurons;
 
+        if(tid == 0) printf("Made it here\n");
         temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
-        //printf("Made it here\n");
+        
         
         temp = temp->prev;
         this->barrier->barrier_exec(this->num_threads);
@@ -154,6 +156,7 @@ void Net::performBackProp(int tid) {
     A_prev_rows = this->input_size;
     A_prev_cols = 1;
 
+    if(tid == 0) printf("First layer backprop\n");
     temp->curr->backProp(W_next, W_next_rows, W_next_cols, dZ_next, dZ_next_rows, dZ_next_cols, A_prev, A_prev_rows, A_prev_cols, tid, this->barrier);
 }
 
@@ -223,20 +226,23 @@ void * Net::pTrain(int tid) {
                 this->setInput(temp_input, temp_output, tid);
     
                 this->barrier->barrier_exec(this->num_threads);
- 
+                //if(tid == 0) printf("Performing forward prop...\n");
                 this->performForwardProp(tid);
 
                 this->barrier->barrier_exec(this->num_threads);
-
+                //if(tid == 0) printf("Performing back prop...\n");
                 this->performBackProp(tid);
 
                 this->barrier->barrier_exec(this->num_threads);
 
+                //if(tid == 0) printf("Updating weights...\n");
                 this->updateWeights(tid);
 
                 this->barrier->barrier_exec(this->num_threads);
 
+                
                 if(tid == 0) {
+                    //printf("Determining loss and prediction...\n");
                     this->cost += this->calculateLoss();
                     // if (j % 5 == 0) {
                     //     printf("Example %d of epoch %d\n", j, i);
@@ -245,6 +251,7 @@ void * Net::pTrain(int tid) {
                     
                     double pred = this->tail->curr->A[0][0];
                     pred = round(pred);
+                    //printf("pred: %lf\n", pred);
                     if (this->label == pred) {
                         this->num_right++;
                     }

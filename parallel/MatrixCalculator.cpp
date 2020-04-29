@@ -8,9 +8,8 @@
 
 #include "MatrixCalculator.h"
 
-MatrixCalculator::MatrixCalculator(int numThreads) {
-    this->numThreads = numThreads;
-    this->threads = new pthread_t[numThreads];
+MatrixCalculator::MatrixCalculator() {
+
     this->res = NULL;
 }
 

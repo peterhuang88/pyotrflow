@@ -8,8 +8,6 @@
 
 #include "Layer.h"
 
-MatrixCalculator mc(4);
-
 /**
 * num_neurons = number of neurons in current layer
 * num_input = number of inputs from previous layer e.g. number of neurons in previous layer
@@ -63,11 +61,13 @@ Layer::~Layer() {
 void Layer::backProp(double** W_next, int W_next_rows, int W_next_cols, double** dZ_next, int dZ_next_rows, int dZ_next_cols, double** A_prev, int A_prev_rows, int A_prev_cols, int tid, Barrier* barrier) {
     // calculate dZ
     double** W_next_transpose = mc.transposeMatrix(W_next, W_next_rows, W_next_cols, tid, this->num_threads, barrier);
+     
     barrier->barrier_exec(this->num_threads);
     double** temp1 = mc.matrixTimesMatrix(W_next_transpose, W_next_cols, W_next_rows, dZ_next, dZ_next_rows, dZ_next_cols, tid, this->num_threads, barrier);
-
+    printf("this->Z[0]: %p\n", this->Z[0]);
     double** deriv = this->sigmoid_derivative(this->Z[0], this->num_neurons, tid, barrier);
-    //printf("made it here!\n");
+    //printf("sigmoid done! %d\n", tid);
+    
     barrier->barrier_exec(this->num_threads);
    
     this->dZ = mc.hadamardProduct(temp1, deriv, this->num_neurons, 1, tid, this->num_threads, barrier);
@@ -247,8 +247,7 @@ void Layer::free_2D(double** arr) {
 double** Layer::sigmoid_derivative(double* input_z, int input_length, int tid, Barrier* barrier) {
     
     if(tid == 0) {
-        //Assume this is freed elsewhere
-        //if(this->sigmoid_deriv_ret != NULL) this->free_2D(this->sigmoid_deriv_ret);
+        if(this->sigmoid_deriv_ret != NULL) this->free_2D(this->sigmoid_deriv_ret);
         this->sigmoid_deriv_ret = this->allocate_2D(input_length, 1);
     }
     
@@ -264,6 +263,7 @@ double** Layer::sigmoid_derivative(double* input_z, int input_length, int tid, B
         partitionStart = tid * partitionSize;
     }
 
+    
     barrier->barrier_exec(this->num_threads);
 
     if(tid < new_num_threads) {
