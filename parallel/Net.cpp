@@ -264,7 +264,6 @@ void * Net::pTrain(int tid, int num_epochs) {
             }
 
             if(tid == 0) {
-                printf("Threads are done executing.\n");
                 this->cost /= -(double)num_observations;
                 double acc = this->num_right / (double)num_observations;
                 printf("Epoch %d cost: %lf\n", i, cost);
