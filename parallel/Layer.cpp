@@ -321,7 +321,7 @@ void Layer::printLayerWeights() {
 void Layer::printZ() {
     std::cout << "Printing layer " << this->name << " Z's\n";
     for (int i = 0; i < this->num_neurons; i++) {
-        printf("%lf ", this->Z[i]);
+        printf("%lf ", this->Z[i][0]);
     }
     printf("\n");
 }

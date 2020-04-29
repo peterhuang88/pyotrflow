@@ -8,7 +8,7 @@
 #include "Barrier.h"
 
 Barrier::Barrier() {
-  barrier_t *b;
+  barrier_t *b = (barrier_t*)malloc(sizeof(barrier_t));
   b->count = 0;
   pthread_mutex_init(&(b->countLock), NULL);
   pthread_cond_init(&(b->okToProceed), NULL);
