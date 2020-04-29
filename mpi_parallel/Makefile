@@ -1,4 +1,4 @@
-CC := g++
+CXX := mpic++
 CFLAGS := -Wall -g
 TARGET := neuralnet
 
@@ -9,9 +9,9 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) -g -o $@ $^
+	$(CXX) -g -o $@ $^
 objects/%.o: %.cpp
-	$(CC) $(CFLAGS) -g -c $<
+	$(CXX) $(CFLAGS) -g -c $<
 clean:
 	rm -rf $(TARGET) *.o
 	

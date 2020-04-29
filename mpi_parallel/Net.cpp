@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <mpi.h>
 
 #include "Net.h"
 
@@ -24,6 +25,27 @@ Net::Net(double lr, int input_size) {
     this->tail = NULL;
     this->label = 0;
     this->parser = new DatasetParser("../data/sonar.all-data", 0);
+    this->stuff = new double[1];
+    this->mpi_on = 0;
+    this->num_train_examples = parser->getNumObservations();
+}
+
+Net::Net(double lr, int input_size, int world_rank, int world_size) {
+    this->lr = lr;
+    this->input_size = input_size;
+    // this->input = new double*[input_size];
+    // for (int i = 0; i < input_size; i++) {
+    //     this->input[i] = new double[1];
+    // }
+    this->input = this->allocate_2D(input_size, 1);
+    this->head = NULL;
+    this->tail = NULL;
+    this->label = 0;
+    this->parser = new DatasetParser("../data/sonar.all-data", 0);
+    this->stuff = new double[1];
+    this->world_rank = world_rank;
+    this->world_size = world_size;
+    this->mpi_on = 1;
 }
 
 Net::~Net() {
@@ -185,6 +207,14 @@ void Net::initializeNetWeights() {
     }
 }
 
+void Net::initializeNetTestWeights() {
+    LayerNode* temp = this->head;
+    while (temp != NULL) {
+        temp->curr->initializeTestWeights();
+        temp = temp->next;
+    }
+}
+
 void Net::updateWeights() {
     LayerNode* temp = this->head;
     
@@ -195,16 +225,35 @@ void Net::updateWeights() {
 }
 
 void Net::trainNet(int num_epochs) {
+    printf("num examples: %d\n", this->num_train_examples);
+    int max_num_examples = 208;
+    int start = 0;
+    int end = 208;
+
+    if (this->mpi_on == 1) {
+        // find start and end for my particular rank
+        start = max_num_examples / this->world_size * this->world_rank;
+        int subdomain_size = max_num_examples / this->world_size;
+
+        end = start + subdomain_size;
+
+        if (this->world_rank == this->world_size - 1) {
+            end = max_num_examples;
+        }
+    }
+
     for (int i = 0; i < num_epochs; i++) {
         double cost = 0;
         int num_right = 0;
-        for (int j = 0; j < 208; j++) {
+        for (int j = start; j < end; j++) {
+        // for (int j = 0; j < this->num_train_examples; j++) {
             double* temp_input = this->parser->getInput(j);
             int temp_output = this->parser->getOutput(j);
             this->setInput(temp_input, temp_output);
             this->performForwardProp();
             this->performBackProp();
             this->updateWeights();
+            
             cost += calculateLoss();
             // if (j % 5 == 0) {
             //     printf("Example %d of epoch %d\n", j, i);
@@ -217,11 +266,19 @@ void Net::trainNet(int num_epochs) {
                 num_right++;
             }
         }
+
+        // if mpi is enabled
+        if (this->mpi_on == 1) {
+            this->syncNetWeights();
+        }
+
         cost /= -208.0;
         double acc = num_right / 208.0;
-        printf("Epoch %d cost: %lf\n", i, cost);
+        if (this->world_rank == 0 || this->mpi_on == 0) {
+            printf("Epoch %d cost: %lf , accuracy: %lf\n", i, cost, acc);
+        }   
         // printf("Epoch %d accuracy: %d\n", i, num_right);
-        printf("Epoch %d accuracy: %lf\n", i, acc);
+        // printf("Epoch %d accuracy: %lf\n", i, acc);
         //break;
     }
 }
@@ -230,6 +287,16 @@ double Net::calculateLoss() {
     double pred = this->tail->curr->A[0][0];
     double Y = this->label;
     return (Y * log(pred) - (1-Y)*log(1-pred));
+}
+
+void Net::syncNetWeights() {
+    LayerNode* temp = this->head;
+    
+    while (temp != NULL) {
+        // temp->curr->updateWeights(this->lr);
+        temp->curr->syncWeights(this->world_rank, this->world_size);
+        temp = temp->next;     
+    }
 }
 
 /***************** HELPER FUNCTIONS ********************************/
@@ -325,4 +392,25 @@ void Net::printGradients() {
         temp = temp->prev;
         // break;
     }
+}
+
+void Net::mpiToy(int world_rank) {
+    this->stuff[0] = world_rank;
+    //printf("Stuff before allreduce: %lf\n", this->stuff[0]);
+    //MPI_Allreduce(this->stuff, this->stuff, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    //printf("Stuff after allreduce: %lf\n", this->stuff[0]);
+    double* temp = this->head->curr->W[0];
+    double** temp2 = this->head->curr->W;
+    int num_elements = this->head->curr->num_neurons * this->head->curr->num_input;
+    for (int i = 0; i < num_elements; i++) {
+        printf("%lf ", temp[i]);
+    }
+    printf("\nPrinting from double**\n");
+    for (int i = 0; i < this->head->curr->num_neurons; i++) {
+        for (int j = 0; j < this->head->curr->num_input; j++) {
+            printf("%lf ", temp2[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }

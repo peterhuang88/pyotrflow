@@ -24,6 +24,7 @@ struct LayerNode {
 class Net {
     public:
         Net(double lr, int input_size);
+        Net(double lr, int input_size, int world_rank, int world_size);
         ~Net();
         
         // actually useful functions
@@ -33,9 +34,11 @@ class Net {
         void performForwardProp();
         void setInput(double* inp, double label);
         void initializeNetWeights();
+        void initializeNetTestWeights();
         void updateWeights();
         void trainNet(int num_epochs);
         double calculateLoss();
+        void syncNetWeights();
 
         // helper functions
         double** allocate_2D(int rows, int cols);
@@ -47,10 +50,16 @@ class Net {
         void printNetWeights();
         void printGradientSizes();
         void printGradients();
+        void mpiToy(int world_rank);
 
         
         LayerNode* head;
         LayerNode* tail;
+        double* stuff;
+        int world_rank;
+        int world_size;
+        int mpi_on;
+        int num_train_examples;
 
     private:
         double lr;
