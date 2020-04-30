@@ -1,5 +1,5 @@
 CC := g++
-CFLAGS := -Wall -g
+CFLAGS := -Wall -g -pthread
 TARGET := neuralnet
 
 # $(wildcard *.cpp /xxx/xxx/*.cpp): get all .cpp files from the current directory and dir "/xxx/xxx/"
