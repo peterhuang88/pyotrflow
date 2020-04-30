@@ -71,13 +71,13 @@ int main(int argc, char** argv) {
     my_net.addLayer(60,10,"test_layer1");
     my_net.addLayer(10,10,"test_layer2");
     my_net.addLayer(10,10,"test_layer3");
-    // my_net.addLayer(10,10,"test_layer4");
-    // my_net.addLayer(10,10,"test_layer5");
-    // my_net.addLayer(10,10, "test_hidden");
-    // my_net.addLayer(10,10, "test_hidden");
-    // my_net.addLayer(10,10, "test_hidden");
-    // my_net.addLayer(10,10, "test_hidden");
-    // my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10,"test_layer4");
+    my_net.addLayer(10,10,"test_layer5");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
     my_net.addLayer(10,1,"output_layer"); 
 
     //my_net.addLayer(4,2, "test_layer2");
