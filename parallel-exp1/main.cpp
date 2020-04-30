@@ -3,6 +3,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include <sys/time.h>
 
 #include "Layer.h"
 #include "Net.h"
@@ -39,9 +40,17 @@ int main(int argc, char** argv) {
     // Layer l1(3,4,1,"test_layer1");
     // l1.printLayerWeights();
     Net my_net(0.01, 60);
-    my_net.addLayer(60,4,"test_layer1");
-    my_net.addLayer(4,2, "test_layer2");
-    my_net.addLayer(2,1, "test_output");
+    my_net.addLayer(60,10,"test_layer1");
+    my_net.addLayer(10,10,"test_layer2");
+    my_net.addLayer(10,10,"test_layer3");
+    my_net.addLayer(10,10,"test_layer4");
+    my_net.addLayer(10,10,"test_layer5");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,10, "test_hidden");
+    my_net.addLayer(10,1,"output_layer");
     my_net.initializeNetWeights();
 
     //my_net.printNet();
@@ -50,6 +59,9 @@ int main(int argc, char** argv) {
     //my_net.printNetActivations();
 
     my_net.initializeGradients();
+
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
 
     //my_net.performBackProp();
     //my_net.printGradients();
@@ -60,6 +72,16 @@ int main(int argc, char** argv) {
     //l1.forwardProp(input);
     //l1.printZ();
     //l1.printA();
+
+    gettimeofday(&end, NULL); 
+
+    double time_taken; 
+
+    time_taken = (end.tv_sec - start.tv_sec) * 1e6; 
+    time_taken = (time_taken + (end.tv_usec - start.tv_usec)) * 1e-6; 
+
+    std::cout << "Time taken by program is : " << std::fixed << time_taken; 
+    std::cout << " sec" << std::endl; 
 
 
     std::cout << "Test done\n";
